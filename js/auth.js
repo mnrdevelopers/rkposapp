@@ -291,27 +291,30 @@ class AuthService {
     return true;
   }
 
-  formatFirebaseError(code) {
-    switch (code) {
-      case 'auth/user-not-found':
-      case 'auth/wrong-password':
-      case 'auth/invalid-credential':
-        return 'Incorrect email or password.';
-      case 'auth/email-already-in-use':
-        return 'This email address is already registered. Please sign in instead.';
-      case 'auth/weak-password':
-        return 'Password is too weak. Please use at least 6 characters.';
-      case 'auth/invalid-email':
-        return 'Please enter a valid email address.';
-      case 'auth/operation-not-allowed':
-        return 'This sign-in method is not enabled yet in Firebase Console under Authentication > Sign-in method.';
-      case 'auth/network-request-failed':
-        return 'Network connection failed. Please check your internet or retry.';
-      case 'auth/too-many-requests':
-        return 'Too many attempts. Access is temporarily blocked. Try again later.';
-      default:
-        return 'Authentication failed. Please check your details and retry.';
+  formatFirebaseError(code, message = '') {
+    const raw = `${code || ''} ${message || ''}`.toLowerCase();
+    if (raw.includes('email-already') || raw.includes('email_exists')) {
+      return 'This email address is already registered. Please sign in instead.';
     }
+    if (raw.includes('user-not-found') || raw.includes('wrong-password') || raw.includes('invalid-credential') || raw.includes('invalid_login_credentials')) {
+      return 'Incorrect email or password. Please verify or register.';
+    }
+    if (raw.includes('weak-password') || raw.includes('weak_password')) {
+      return 'Password is too weak. Please use at least 6 characters.';
+    }
+    if (raw.includes('invalid-email') || raw.includes('invalid_email')) {
+      return 'Please enter a valid email address.';
+    }
+    if (raw.includes('operation-not-allowed') || raw.includes('operation_not_allowed')) {
+      return 'Email/Password sign-in is disabled. Please enable it in Firebase Console under Authentication > Sign-in method.';
+    }
+    if (raw.includes('network-request-failed')) {
+      return 'Network connection failed. Offline login available.';
+    }
+    if (raw.includes('too-many-requests')) {
+      return 'Too many attempts. Access is temporarily blocked. Try again later.';
+    }
+    return message || 'Authentication failed. Please check your details and retry.';
   }
 }
 

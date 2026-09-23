@@ -31,8 +31,6 @@ class SettingsService {
       await this.set(key, value);
     }
   }
-
-  }
 }
 
 window.settingsService = new SettingsService();

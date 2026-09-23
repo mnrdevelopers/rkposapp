@@ -241,7 +241,16 @@
           window.location.replace('sale.html');
         }, 600);
       } catch (err) {
-        showAlert(err.message || 'Registration failed.');
+        if (err.message && err.message.includes('already registered')) {
+          showAlert(err.message + ' Switching to Sign In...', 'warning');
+          setTimeout(() => {
+            switchAuthTab('signin');
+            document.getElementById('signin-email').value = email;
+            document.getElementById('signin-password').focus();
+          }, 1200);
+        } else {
+          showAlert(err.message || 'Registration failed.');
+        }
         btn.disabled = false;
         spinner.classList.add('d-none');
       }

@@ -3,7 +3,7 @@
  * Offline application shell caching with Stale-While-Revalidate strategy.
  */
 
-const CACHE_NAME = 'rk-fashions-pos-v1.0';
+const CACHE_NAME = 'rk-fashions-pos-v1.1';
 
 const PRECACHE_ASSETS = [
   './',
@@ -87,7 +87,7 @@ self.addEventListener('fetch', (event) => {
           if (networkResponse && networkResponse.status === 200) {
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
           }
-        }).catch(() => {});
+        }).catch(() => { });
         return cachedResponse;
       }
 

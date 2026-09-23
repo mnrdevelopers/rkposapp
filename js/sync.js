@@ -190,6 +190,71 @@ class SyncService {
         console.warn('Unknown sync action:', item.action);
     }
   }
+
+  /**
+   * Diagnostic method: tests live read/write capability to Firestore.
+   */
+  async testConnection() {
+    if (!navigator.onLine) {
+      return { success: false, message: 'Device is offline. Connect to internet first.' };
+    }
+
+    if (!window.firebaseService) {
+      return { success: false, message: 'Firebase service is not loaded.' };
+    }
+
+    await window.firebaseService.init();
+    const firestore = window.firebaseService.getFirestore();
+
+    if (!firestore) {
+      return {
+        success: false,
+        message: 'Could not initialize Firestore client. Please check your internet connection or browser ad-blockers.'
+      };
+    }
+
+    try {
+      // Test write to stores/rk_fashions_main/settings/connection_test
+      const testRef = firestore.collection('stores').doc(this.storeId).collection('settings').doc('connection_test');
+      await testRef.set({
+        status: 'CONNECTED',
+        lastTestedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        device: navigator.userAgent.substring(0, 60)
+      }, { merge: true });
+
+      // Trigger queue flush
+      const countBefore = await this.getPendingCount();
+      await this.triggerSync();
+      const countAfter = await this.getPendingCount();
+
+      return {
+        success: true,
+        message: `Successfully connected to Firebase Project "rkposapp"! Test document saved. ${countBefore - countAfter} pending items synchronized.`
+      };
+    } catch (err) {
+      let friendlyError = err.message;
+      if (err.code === 'permission-denied') {
+        friendlyError = 'Permission Denied: Make sure your Firestore Security Rules allow read/write or publish rules from firestore.rules.';
+      } else if (err.code === 'not-found') {
+        friendlyError = 'Database Not Found: Make sure you clicked "Create Database" in your Firebase Console under Firestore Database.';
+      }
+      return {
+        success: false,
+        code: err.code || 'UNKNOWN',
+        message: friendlyError
+      };
+    }
+  }
+
+  async getQueueDetails() {
+    try {
+      const queue = await window.appDB.getAll('syncQueue');
+      return queue;
+    } catch (e) {
+      return [];
+    }
+  }
 }
 
 window.syncService = new SyncService();
+

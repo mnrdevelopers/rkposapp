@@ -118,6 +118,38 @@
         </div>
       </div>
 
+      <!-- Store Option: Owner (Create Store) vs Staff (Join Store) -->
+      <div class="mb-3 p-2 rounded bg-light border">
+        <label class="form-label-retail mb-2" style="font-size: 0.78rem;">Store Role &amp; Cloud Connection</label>
+        <div class="d-flex gap-2 mb-2">
+          <div class="form-check flex-fill p-2 border rounded bg-white">
+            <input class="form-check-input" type="radio" name="storeRoleChoice" id="role-owner" value="owner" checked onchange="toggleStoreRoleFields()">
+            <label class="form-check-label small fw-bold" for="role-owner">
+              <i class="fa-solid fa-crown text-warning me-1"></i>Store Owner
+            </label>
+            <div class="text-muted" style="font-size: 0.7rem;">Create new store</div>
+          </div>
+          <div class="form-check flex-fill p-2 border rounded bg-white">
+            <input class="form-check-input" type="radio" name="storeRoleChoice" id="role-cashier" value="cashier" onchange="toggleStoreRoleFields()">
+            <label class="form-check-label small fw-bold" for="role-cashier">
+              <i class="fa-solid fa-link text-primary me-1"></i>Cashier / Staff
+            </label>
+            <div class="text-muted" style="font-size: 0.7rem;">Join with Store Code</div>
+          </div>
+        </div>
+
+        <div id="store-name-group">
+          <label for="register-store-name" class="form-label-retail" style="font-size: 0.75rem;">Shop / Store Name</label>
+          <input type="text" id="register-store-name" class="form-control form-control-sm form-control-retail" placeholder="e.g. RK Fashions" value="RK Fashions">
+        </div>
+
+        <div id="store-code-group" class="d-none">
+          <label for="register-store-code" class="form-label-retail text-primary fw-bold" style="font-size: 0.75rem;">Owner's Unique Store Code</label>
+          <input type="text" id="register-store-code" class="form-control form-control-sm form-control-retail font-monospace text-uppercase fw-bold" placeholder="e.g. RK-7492">
+          <small class="text-muted" style="font-size: 0.7rem;">Ask your store owner for their unique 6-character code.</small>
+        </div>
+      </div>
+
       <button type="submit" id="btn-register-submit" class="btn btn-retail btn-primary-retail w-100 py-2 fs-6 mt-2">
         <span id="btn-register-spinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
         <span>CREATE ACCOUNT &amp; START POS</span>
@@ -131,6 +163,7 @@
 
   <script src="js/db.js"></script>
   <script src="js/firebase-config.js"></script>
+  <script src="js/store.js"></script>
   <script src="js/auth.js"></script>
   <script>
     let currentMode = 'signin';
@@ -215,6 +248,21 @@
       }
     });
 
+    function toggleStoreRoleFields() {
+      const isOwner = document.getElementById('role-owner').checked;
+      const storeNameGroup = document.getElementById('store-name-group');
+      const storeCodeGroup = document.getElementById('store-code-group');
+
+      if (isOwner) {
+        storeNameGroup.classList.remove('d-none');
+        storeCodeGroup.classList.add('d-none');
+      } else {
+        storeNameGroup.classList.add('d-none');
+        storeCodeGroup.classList.remove('d-none');
+        document.getElementById('register-store-code').focus();
+      }
+    }
+
     // Registration Form
     document.getElementById('register-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -230,12 +278,32 @@
         return;
       }
 
+      const isOwner = document.getElementById('role-owner').checked;
+      let storeOption = null;
+
+      if (isOwner) {
+        storeOption = {
+          action: 'CREATE',
+          storeName: document.getElementById('register-store-name').value.trim() || 'RK Fashions'
+        };
+      } else {
+        const storeCode = document.getElementById('register-store-code').value.trim().toUpperCase();
+        if (!storeCode) {
+          showAlert('Please enter the Unique Store Code provided by your store owner.');
+          return;
+        }
+        storeOption = {
+          action: 'JOIN',
+          storeCode: storeCode
+        };
+      }
+
       btn.disabled = true;
       spinner.classList.remove('d-none');
       document.getElementById('auth-alert').classList.add('d-none');
 
       try {
-        await window.authService.register(name, email, password);
+        await window.authService.register(name, email, password, storeOption);
         showAlert('Account created successfully! Redirecting...', 'success');
         setTimeout(() => {
           window.location.replace('sale.html');

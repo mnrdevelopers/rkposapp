@@ -3,7 +3,7 @@
  * Offline application shell caching with Stale-While-Revalidate strategy.
  */
 
-const CACHE_NAME = 'rk-fashions-pos-v1.1';
+const CACHE_NAME = 'rk-fashions-pos-v1.2';
 
 const PRECACHE_ASSETS = [
   './',
@@ -30,6 +30,7 @@ const PRECACHE_ASSETS = [
   './js/lib/html5-qrcode.min.js',
   './js/db.js',
   './js/firebase-config.js',
+  './js/store.js',
   './js/auth.js',
   './js/barcode.js',
   './js/scanner.js',

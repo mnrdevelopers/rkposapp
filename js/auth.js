@@ -110,10 +110,19 @@ class AuthService {
           role: this.determineRole(user.email)
         };
         this.setSession(userSession);
+
+        // Restore store profile for this user
+        if (window.storeService) {
+          await window.storeService.restoreUserStoreFromCloud(userSession);
+        }
+        if (window.syncService) {
+          window.syncService.pullStoreData();
+        }
+
         return { success: true, user: userSession };
       } catch (fbErr) {
         console.warn('Firebase online login failed:', fbErr.message);
-        throw new Error(this.formatFirebaseError(fbErr.code));
+        throw new Error(this.formatFirebaseError(fbErr.code, fbErr.message));
       }
     }
 
@@ -126,6 +135,8 @@ class AuthService {
         email: matched.email,
         displayName: matched.displayName || matched.email.split('@')[0],
         role: matched.role || this.determineRole(matched.email),
+        storeId: matched.storeId || (window.storeService ? window.storeService.getActiveStoreId() : null),
+        storeCode: matched.storeCode || (window.storeService ? window.storeService.getActiveStoreCode() : null),
         isOfflineSession: true
       };
       this.setSession(userSession);
@@ -140,7 +151,7 @@ class AuthService {
     throw new Error('Invalid email or password. Please verify your credentials or register a new account.');
   }
 
-  async register(name, email, password) {
+  async register(name, email, password, storeOption = null) {
     name = (name || '').trim();
     email = (email || '').trim();
     password = (password || '').trim();
@@ -175,11 +186,11 @@ class AuthService {
           email: fbUser.email,
           displayName: name || fbUser.email.split('@')[0],
           photoURL: null,
-          role: 'ADMIN'
+          role: (storeOption && storeOption.action === 'JOIN') ? 'CASHIER' : 'ADMIN'
         };
       } catch (fbErr) {
         console.warn('Firebase registration error:', fbErr);
-        throw new Error(this.formatFirebaseError(fbErr.code));
+        throw new Error(this.formatFirebaseError(fbErr.code, fbErr.message));
       }
     } else {
       // 2. Offline account creation
@@ -187,9 +198,19 @@ class AuthService {
         uid: 'local_' + Date.now(),
         email: email,
         displayName: name,
-        role: 'ADMIN',
+        role: (storeOption && storeOption.action === 'JOIN') ? 'CASHIER' : 'ADMIN',
         isOfflineSession: true
       };
+    }
+
+    // 3. Store creation / joining
+    if (window.storeService) {
+      if (storeOption && storeOption.action === 'JOIN' && storeOption.storeCode) {
+        await window.storeService.joinStoreByCode(storeOption.storeCode, userSession);
+      } else {
+        const storeName = (storeOption && storeOption.storeName) || `${name}'s Store`;
+        await window.storeService.createStore(storeName, userSession);
+      }
     }
 
     // Cache local user so they can log in even when offline
@@ -198,10 +219,18 @@ class AuthService {
       email: email,
       password: password,
       displayName: name,
-      role: 'ADMIN'
+      storeId: userSession.storeId,
+      storeCode: userSession.storeCode,
+      role: userSession.role
     });
 
     this.setSession(userSession);
+
+    // Initial pull
+    if (window.syncService && navigator.onLine) {
+      window.syncService.pullStoreData();
+    }
+
     return { success: true, user: userSession };
   }
 
@@ -230,6 +259,19 @@ class AuthService {
         role: this.determineRole(user.email)
       };
       this.setSession(userSession);
+
+      // Restore or auto-create store for Google user
+      if (window.storeService) {
+        const storeProfile = await window.storeService.restoreUserStoreFromCloud(userSession);
+        if (!storeProfile && !userSession.storeId) {
+          await window.storeService.createStore(`${userSession.displayName}'s Store`, userSession);
+        }
+      }
+
+      if (window.syncService) {
+        window.syncService.pullStoreData();
+      }
+
       return { success: true, user: userSession };
     } catch (err) {
       console.error('Google Sign-in error:', err);

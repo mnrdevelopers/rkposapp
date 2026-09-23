@@ -115,11 +115,41 @@ class ProductService {
       savedVariants.push(variantRecord);
     }
 
-    // Queue for Firestore sync
-    await window.salesService.enqueueSync('SAVE_PRODUCT', 'products', productId, {
-      product: productRecord,
-      variants: savedVariants
-    });
+    // Direct Online Save to Cloud Firestore + Offline Fallback
+    let savedToCloud = false;
+    const isOnline = navigator.onLine;
+    const firestore = window.firebaseService ? window.firebaseService.getFirestore() : null;
+    const isCustom = window.firebaseService ? window.firebaseService.isConfigured : false;
+    const storeId = window.storeService ? window.storeService.getActiveStoreId() : (localStorage.getItem('rk_active_store_id') || 'rk_fashions_main');
+
+    if (isOnline && firestore && isCustom) {
+      try {
+        const storeRef = firestore.collection('stores').doc(storeId);
+        const prodRef = storeRef.collection('products').doc(productId);
+        await prodRef.set(productRecord, { merge: true });
+
+        const batch = firestore.batch();
+        for (const v of savedVariants) {
+          const vRef = prodRef.collection('variants').doc(v.id);
+          batch.set(vRef, v, { merge: true });
+        }
+        await batch.commit();
+        savedToCloud = true;
+        console.log(`[Product] Saved product ${productId} directly to Cloud Firestore (Store: ${storeId})`);
+      } catch (err) {
+        console.warn('Direct Firestore save failed, fallback to syncQueue:', err);
+      }
+    }
+
+    if (!savedToCloud) {
+      await window.salesService.enqueueSync('SAVE_PRODUCT', 'products', productId, {
+        product: productRecord,
+        variants: savedVariants
+      });
+      if (window.syncService) {
+        window.syncService.triggerSync();
+      }
+    }
 
     return { product: productRecord, variants: savedVariants };
   }
@@ -185,7 +215,7 @@ class ProductService {
       const firestore = window.firebaseService.getFirestore();
       if (firestore) {
         try {
-          const storeId = (window.syncService && window.syncService.storeId) || localStorage.getItem('rk_store_id') || 'rk_store_main';
+          const storeId = window.storeService ? window.storeService.getActiveStoreId() : (localStorage.getItem('rk_active_store_id') || 'rk_fashions_main');
           const storeRef = firestore.collection('stores').doc(storeId);
           const prodRef = storeRef.collection('products').doc(productId);
 
@@ -196,7 +226,7 @@ class ProductService {
           batch.delete(prodRef);
           await batch.commit();
           deletedDirectly = true;
-          console.log(`[Firebase] Successfully deleted product ${productId} and its variants directly from Firestore.`);
+          console.log(`[Firebase] Successfully deleted product ${productId} and its variants directly from Firestore (Store: ${storeId}).`);
         } catch (directErr) {
           console.warn('[Firebase] Direct delete encountered issue, queueing for background sync:', directErr);
           if (directErr.code === 'permission-denied') {

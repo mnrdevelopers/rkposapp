@@ -57,6 +57,8 @@ class AppController {
   renderHeaderAndNav() {
     const user = window.authService ? window.authService.getCurrentUser() : null;
     const isAdmin = window.authService ? window.authService.isAdmin() : false;
+    const storeCode = window.storeService ? window.storeService.getActiveStoreCode() : 'RK-MAIN';
+    const storeName = window.storeService ? window.storeService.getActiveStoreName() : 'RK FASHIONS';
 
     // Render Sidebar if container exists
     const sidebarContainer = document.getElementById('app-sidebar-container');
@@ -68,8 +70,9 @@ class AppController {
             <div class="d-flex align-items-center gap-2">
               <div class="brand-logo-fallback"><i class="fa-solid fa-shirt"></i></div>
               <div class="brand-text">
-                <h1 class="brand-title">RK FASHIONS</h1>
+                <h1 class="brand-title">${storeName}</h1>
                 <div class="brand-subtitle">LADIES &amp; KIDS WEAR</div>
+                <div class="badge bg-warning text-dark font-monospace mt-1 px-2" style="font-size: 0.68rem; letter-spacing: 0.5px;">Store: ${storeCode}</div>
               </div>
             </div>
             <button type="button" class="btn btn-sm btn-outline-light border-0 sidebar-close-btn p-1" onclick="window.app.toggleMobileSidebar(false)" aria-label="Close menu">
@@ -121,7 +124,7 @@ class AppController {
                 <i class="fa-solid fa-circle-user fa-lg text-warning"></i>
                 <div style="line-height: 1.1;">
                   <div style="font-size: 0.85rem; font-weight: 700;">${user ? user.displayName : 'Store Admin'}</div>
-                  <div style="font-size: 0.7rem; color: #FEBA17;">${user ? user.role : 'ADMIN'}</div>
+                  <div style="font-size: 0.7rem; color: #FEBA17;">${user ? user.role : 'ADMIN'} • ${storeCode}</div>
                 </div>
               </div>
               <button class="btn btn-sm btn-outline-light border-0 d-flex align-items-center gap-1" title="Logout" onclick="if (confirm('Log out of POS?')) window.authService.logout()">
@@ -218,19 +221,32 @@ class AppController {
 
   injectHeaderControls() {
     const headerRight = document.querySelector('.header-right');
-    if (headerRight && !document.getElementById('global-header-logout-btn')) {
-      const logoutBtn = document.createElement('button');
-      logoutBtn.id = 'global-header-logout-btn';
-      logoutBtn.type = 'button';
-      logoutBtn.className = 'btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1 ms-1';
-      logoutBtn.title = 'Logout of POS';
-      logoutBtn.innerHTML = '<i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="d-none d-sm-inline small fw-bold">Logout</span>';
-      logoutBtn.onclick = () => {
-        if (confirm('Are you sure you want to log out of the POS system?')) {
-          window.authService.logout();
-        }
-      };
-      headerRight.appendChild(logoutBtn);
+    if (headerRight) {
+      if (!document.getElementById('global-header-store-badge')) {
+        const storeCode = window.storeService ? window.storeService.getActiveStoreCode() : 'RK-MAIN';
+        const storeBadge = document.createElement('span');
+        storeBadge.id = 'global-header-store-badge';
+        storeBadge.className = 'badge bg-light text-dark border font-monospace me-2 d-none d-md-inline-block';
+        storeBadge.title = 'Active Store Code';
+        storeBadge.style.fontSize = '0.75rem';
+        storeBadge.innerHTML = `<i class="fa-solid fa-store me-1 text-primary"></i>${storeCode}`;
+        headerRight.prepend(storeBadge);
+      }
+
+      if (!document.getElementById('global-header-logout-btn')) {
+        const logoutBtn = document.createElement('button');
+        logoutBtn.id = 'global-header-logout-btn';
+        logoutBtn.type = 'button';
+        logoutBtn.className = 'btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1 ms-1';
+        logoutBtn.title = 'Logout of POS';
+        logoutBtn.innerHTML = '<i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="d-none d-sm-inline small fw-bold">Logout</span>';
+        logoutBtn.onclick = () => {
+          if (confirm('Are you sure you want to log out of the POS system?')) {
+            window.authService.logout();
+          }
+        };
+        headerRight.appendChild(logoutBtn);
+      }
     }
   }
 

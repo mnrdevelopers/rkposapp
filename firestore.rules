@@ -1,13 +1,22 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // RK FASHIONS POS - Store data rules
-    // Allows your POS terminals to read and sync products, inventory, and sales
+    // Stores & subcollections (products, variants, sales, items, settings)
     match /stores/{storeId} {
       allow read, write: if true;
       match /{allChildren=**} {
         allow read, write: if true;
       }
+    }
+
+    // Store Code lookup directory (for cashiers and terminals to join with unique code)
+    match /storeCodes/{code} {
+      allow read, write: if true;
+    }
+
+    // User profile and store linking
+    match /users/{userId} {
+      allow read, write: if true;
     }
   }
 }

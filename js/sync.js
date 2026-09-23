@@ -11,6 +11,13 @@ class SyncService {
     this.init();
   }
 
+  getStoreId() {
+    if (window.storeService) {
+      return window.storeService.getActiveStoreId();
+    }
+    return localStorage.getItem('rk_active_store_id') || this.storeId || 'rk_fashions_main';
+  }
+
   init() {
     window.addEventListener('online', () => {
       console.log('Network connected, triggering sync...');
@@ -20,6 +27,15 @@ class SyncService {
     window.addEventListener('offline', () => {
       console.log('Network disconnected, switching to offline mode...');
       this.notifyListeners();
+    });
+
+    window.addEventListener('rk_store_changed', (e) => {
+      if (e.detail && e.detail.storeId) {
+        this.storeId = e.detail.storeId;
+        if (navigator.onLine) {
+          this.pullStoreData(this.storeId);
+        }
+      }
     });
 
     // Periodic check every 30 seconds
@@ -127,6 +143,9 @@ class SyncService {
           break; // Stop batch on network/auth offline error to preserve sequence
         }
       }
+
+      // Two-way sync: Pull latest catalog updates down from Cloud Firestore
+      await this.pullStoreData();
     } catch (err) {
       console.error('Sync engine batch error:', err);
     } finally {
@@ -135,8 +154,84 @@ class SyncService {
     }
   }
 
+  /**
+   * Two-Way Cloud Fetch & Sync:
+   * Pulls the store's complete catalog, variants, and settings from Cloud Firestore down into local IndexedDB.
+   */
+  async pullStoreData(storeId = null) {
+    if (!navigator.onLine) return { success: false, reason: 'offline' };
+    const targetStoreId = storeId || this.getStoreId();
+    if (!targetStoreId) return { success: false, reason: 'no_store_id' };
+
+    const firestore = window.firebaseService ? window.firebaseService.getFirestore() : null;
+    if (!firestore) return { success: false, reason: 'no_firestore' };
+
+    try {
+      const db = window.appDB;
+      const storeRef = firestore.collection('stores').doc(targetStoreId);
+
+      // 1. Fetch all products from Firestore
+      const productsSnapshot = await storeRef.collection('products').get();
+      const cloudProductIds = new Set();
+      const cloudVariantIds = new Set();
+
+      for (const pDoc of productsSnapshot.docs) {
+        const prodData = pDoc.data();
+        cloudProductIds.add(prodData.id);
+        await db.update('products', prodData);
+
+        // Fetch variants for this product
+        const variantsSnapshot = await pDoc.ref.collection('variants').get();
+        for (const vDoc of variantsSnapshot.docs) {
+          const varData = vDoc.data();
+          cloudVariantIds.add(varData.id);
+          await db.update('variants', varData);
+        }
+      }
+
+      // 2. Clean up any local products/variants deleted in the cloud by another user/terminal
+      if (productsSnapshot.docs.length > 0) {
+        const localProducts = await db.getAll('products');
+        for (const lp of localProducts) {
+          if (!cloudProductIds.has(lp.id)) {
+            await db.delete('products', lp.id);
+          }
+        }
+        const localVariants = await db.getAll('variants');
+        for (const lv of localVariants) {
+          if (!cloudVariantIds.has(lv.id)) {
+            await db.delete('variants', lv.id);
+          }
+        }
+      }
+
+      // 3. Fetch store settings
+      const settingsDoc = await storeRef.collection('settings').doc('profile').get();
+      if (settingsDoc.exists) {
+        const sData = settingsDoc.data();
+        for (const [k, v] of Object.entries(sData)) {
+          await db.update('settings', { key: k, value: v });
+        }
+      }
+
+      console.log(`[Sync] Successfully pulled ${cloudProductIds.size} products and ${cloudVariantIds.size} variants from store ${targetStoreId}`);
+      window.dispatchEvent(new CustomEvent('rk_products_updated', {
+        detail: { productCount: cloudProductIds.size, variantCount: cloudVariantIds.size }
+      }));
+
+      return {
+        success: true,
+        productCount: cloudProductIds.size,
+        variantCount: cloudVariantIds.size
+      };
+    } catch (err) {
+      console.warn('Pull store data error:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
   async processQueueItem(firestore, item) {
-    const storeRef = firestore.collection('stores').doc(this.storeId);
+    const storeRef = firestore.collection('stores').doc(this.getStoreId());
 
     switch (item.action) {
       case 'CREATE_SALE': {
@@ -256,8 +351,8 @@ class SyncService {
     }
 
     try {
-      // Test write to stores/rk_fashions_main/settings/connection_test
-      const testRef = firestore.collection('stores').doc(this.storeId).collection('settings').doc('connection_test');
+      // Test write to stores/{storeId}/settings/connection_test
+      const testRef = firestore.collection('stores').doc(this.getStoreId()).collection('settings').doc('connection_test');
       await testRef.set({
         status: 'CONNECTED',
         lastTestedAt: firebase.firestore.FieldValue.serverTimestamp(),

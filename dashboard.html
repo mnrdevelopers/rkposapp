@@ -36,9 +36,10 @@
         <div class="card-retail p-4 mb-4" style="background: linear-gradient(135deg, var(--dark) 0%, var(--primary) 100%); color: #fff;">
           <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <span class="badge bg-warning text-dark fw-bold">RK FASHIONS</span>
+              <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                <span class="badge bg-warning text-dark fw-bold" id="dash-store-name">RK FASHIONS</span>
                 <span class="small opacity-75">Ladies &amp; Kids Wear</span>
+                <span class="badge bg-white text-dark font-monospace fw-bold" id="dash-store-code">Code: RK-MAIN</span>
               </div>
               <h3 class="fw-bold mb-1" id="greeting-text">Good Afternoon 👋</h3>
               <p class="mb-0 opacity-75 small">Here is your live retail sales and inventory status today.</p>
@@ -203,6 +204,7 @@
   <script src="js/lib/bootstrap.bundle.min.js"></script>
   <script src="js/db.js"></script>
   <script src="js/firebase-config.js"></script>
+  <script src="js/store.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/barcode.js"></script>
   <script src="js/sales.js"></script>
@@ -231,6 +233,15 @@
       const user = window.authService ? window.authService.getCurrentUser() : null;
       const name = user ? user.displayName : 'Team';
       document.getElementById('greeting-text').textContent = `${greeting}, ${name} 👋`;
+
+      if (window.storeService) {
+        const code = window.storeService.getActiveStoreCode();
+        const sName = window.storeService.getActiveStoreName();
+        const codeEl = document.getElementById('dash-store-code');
+        const nameEl = document.getElementById('dash-store-name');
+        if (codeEl) codeEl.textContent = `Code: ${code}`;
+        if (nameEl && sName) nameEl.textContent = sName;
+      }
     }
 
     async function loadDashboardMetrics() {

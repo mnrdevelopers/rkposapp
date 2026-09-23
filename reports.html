@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports — RK FASHIONS</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
+  <meta name="theme-color" content="#74512D">
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/fontawesome.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-wrapper">
+    <div id="app-sidebar-container"></div>
+
+    <div class="main-wrapper">
+      <header class="top-header">
+        <div class="header-left">
+          <h2 class="header-page-title"><i class="fa-solid fa-chart-line me-2 text-warning"></i>Business Reports</h2>
+        </div>
+        <div class="header-right">
+          <div id="global-sync-badge" class="status-pill status-online">
+            <span class="status-dot"></span>
+            <span class="status-text">Synced</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="page-content">
+        <!-- Date Range Filter Box -->
+        <div class="card-retail p-3 mb-4">
+          <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+              <label for="report-from" class="form-label-retail">From Date</label>
+              <input type="date" id="report-from" class="form-control form-control-retail">
+            </div>
+            <div class="col-md-3">
+              <label for="report-to" class="form-label-retail">To Date</label>
+              <input type="date" id="report-to" class="form-control form-control-retail">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label-retail">Presets</label>
+              <div class="btn-group w-100" role="group">
+                <button type="button" class="btn btn-sm btn-outline-retail" onclick="setPreset('today')">Today</button>
+                <button type="button" class="btn btn-sm btn-outline-retail" onclick="setPreset('yesterday')">Yesterday</button>
+                <button type="button" class="btn btn-sm btn-outline-retail" onclick="setPreset('7days')">7 Days</button>
+                <button type="button" class="btn btn-sm btn-outline-retail" onclick="setPreset('month')">Month</button>
+              </div>
+            </div>
+            <div class="col-md-3 text-end">
+              <button type="button" class="btn btn-retail btn-primary-retail w-100" onclick="generateReport()">
+                <i class="fa-solid fa-filter me-1"></i> Generate Report
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-sm-6 col-lg-3">
+            <div class="kpi-card">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="kpi-label">Net Sales Revenue</div>
+                <div class="kpi-icon" style="background: var(--success-bg); color: var(--success);"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+              </div>
+              <div class="kpi-value text-success" id="rep-net-sales">₹0</div>
+              <div class="small text-muted mt-1">Excludes cancelled bills</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6 col-lg-3">
+            <div class="kpi-card">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="kpi-label">Completed Bills</div>
+                <div class="kpi-icon" style="background: var(--info-bg); color: var(--info);"><i class="fa-solid fa-receipt"></i></div>
+              </div>
+              <div class="kpi-value" id="rep-bills-count">0</div>
+              <div class="small text-muted mt-1" id="rep-cancelled-sub">0 cancelled</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6 col-lg-3">
+            <div class="kpi-card">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="kpi-label">Items Sold</div>
+                <div class="kpi-icon" style="background: var(--primary-light); color: var(--primary);"><i class="fa-solid fa-bag-shopping"></i></div>
+              </div>
+              <div class="kpi-value" id="rep-items-count">0</div>
+              <div class="small text-muted mt-1">Total pieces sold</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6 col-lg-3">
+            <div class="kpi-card">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="kpi-label">Total Discounts</div>
+                <div class="kpi-icon" style="background: var(--danger-bg); color: var(--danger);"><i class="fa-solid fa-tag"></i></div>
+              </div>
+              <div class="kpi-value text-danger" id="rep-discount">₹0</div>
+              <div class="small text-muted mt-1">Bill &amp; promo savings</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Mode Breakdown Cards -->
+        <div class="card-retail p-4 mb-4">
+          <h5 class="fw-bold mb-3" style="color: var(--dark);">
+            <i class="fa-solid fa-wallet me-2 text-primary"></i>Payment Modes Collection
+          </h5>
+          <div class="row g-3 text-center">
+            <div class="col-md-4">
+              <div class="p-3 rounded border" style="background: var(--surface-alt);">
+                <div class="text-muted small fw-bold mb-1"><i class="fa-solid fa-money-bill-wave text-success me-1"></i> CASH</div>
+                <h3 class="fw-bold m-0 text-dark" id="pay-break-cash">₹0</h3>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded border" style="background: var(--surface-alt);">
+                <div class="text-muted small fw-bold mb-1"><i class="fa-solid fa-mobile-screen-button text-info me-1"></i> UPI / SCAN</div>
+                <h3 class="fw-bold m-0 text-dark" id="pay-break-upi">₹0</h3>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded border" style="background: var(--surface-alt);">
+                <div class="text-muted small fw-bold mb-1"><i class="fa-solid fa-credit-card text-warning me-1"></i> CARD / POS</div>
+                <h3 class="fw-bold m-0 text-dark" id="pay-break-card">₹0</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sales in Selected Range -->
+        <div class="card-retail">
+          <div class="card-header-retail">
+            <h6 class="m-0 fw-bold" style="color: var(--dark);">
+              <i class="fa-solid fa-list me-2 text-warning"></i>Transactions in Selected Period
+            </h6>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="bg-light small">
+                <tr>
+                  <th>Bill No</th>
+                  <th>Date &amp; Time</th>
+                  <th>Items</th>
+                  <th>Payment</th>
+                  <th class="text-end">Discount</th>
+                  <th class="text-end">Amount</th>
+                  <th class="text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody id="report-sales-tbody">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+            <div id="report-empty" class="p-4 text-center text-muted small d-none">
+              No transactions recorded for the selected dates.
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div id="app-bottom-nav-container"></div>
+  </div>
+
+  <script src="js/lib/bootstrap.bundle.min.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/barcode.js"></script>
+  <script src="js/sales.js"></script>
+  <script src="js/inventory.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Require Admin role for reports
+      const authed = window.authService.requireAuth('ADMIN');
+      if (!authed) return;
+
+      setPreset('today');
+    });
+
+    function setPreset(preset) {
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+
+      const fromInput = document.getElementById('report-from');
+      const toInput = document.getElementById('report-to');
+
+      toInput.value = todayStr;
+
+      if (preset === 'today') {
+        fromInput.value = todayStr;
+      } else if (preset === 'yesterday') {
+        const y = new Date(now);
+        y.setDate(now.getDate() - 1);
+        const yStr = y.toISOString().split('T')[0];
+        fromInput.value = yStr;
+        toInput.value = yStr;
+      } else if (preset === '7days') {
+        const d = new Date(now);
+        d.setDate(now.getDate() - 7);
+        fromInput.value = d.toISOString().split('T')[0];
+      } else if (preset === 'month') {
+        const m = new Date(now.getFullYear(), now.getMonth(), 1);
+        fromInput.value = m.toISOString().split('T')[0];
+      }
+
+      generateReport();
+    }
+
+    async function generateReport() {
+      const from = document.getElementById('report-from').value;
+      const to = document.getElementById('report-to').value;
+
+      if (!from || !to) {
+        window.app.showToast('Please select From and To dates.', 'warning');
+        return;
+      }
+
+      const report = await window.reportsService.getDateRangeReport(from, to);
+
+      document.getElementById('rep-net-sales').textContent = `₹${report.totalNetSales}`;
+      document.getElementById('rep-bills-count').textContent = report.totalBills;
+      document.getElementById('rep-cancelled-sub').textContent = `${report.cancelledBills} cancelled bills`;
+      document.getElementById('rep-items-count').textContent = report.totalUnits;
+      document.getElementById('rep-discount').textContent = `₹${report.totalDiscount}`;
+
+      document.getElementById('pay-break-cash').textContent = `₹${report.paymentBreakdown.cash}`;
+      document.getElementById('pay-break-upi').textContent = `₹${report.paymentBreakdown.upi}`;
+      document.getElementById('pay-break-card').textContent = `₹${report.paymentBreakdown.card}`;
+
+      const tbody = document.getElementById('report-sales-tbody');
+      const emptyState = document.getElementById('report-empty');
+
+      if (!report.sales || report.sales.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.classList.remove('d-none');
+        return;
+      }
+
+      emptyState.classList.add('d-none');
+      tbody.innerHTML = report.sales.map(s => `
+        <tr>
+          <td class="fw-bold font-monospace">${s.billNo}</td>
+          <td>${s.date} <small class="text-muted">${s.time}</small></td>
+          <td>${s.itemCount} items (${s.totalUnits} pcs)</td>
+          <td><span class="badge bg-light text-dark border">${s.paymentMethod}</span></td>
+          <td class="text-end text-muted">${s.discountAmount > 0 ? `₹${s.discountAmount}` : '-'}</td>
+          <td class="text-end fw-bold">₹${s.grandTotal}</td>
+          <td class="text-center">
+            <span class="badge ${s.status === 'COMPLETED' ? 'bg-success' : 'bg-danger'}">
+              ${s.status}
+            </span>
+          </td>
+        </tr>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

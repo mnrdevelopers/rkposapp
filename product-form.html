@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Form — RK FASHIONS</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
+  <meta name="theme-color" content="#74512D">
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/fontawesome.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-wrapper">
+    <div id="app-sidebar-container"></div>
+
+    <div class="main-wrapper">
+      <header class="top-header">
+        <div class="header-left">
+          <a href="products.html" class="btn btn-sm btn-outline-retail me-2"><i class="fa-solid fa-arrow-left"></i></a>
+          <h2 class="header-page-title" id="page-title"><i class="fa-solid fa-plus me-2 text-warning"></i>Add New Product</h2>
+        </div>
+        <div class="header-right">
+          <div id="global-sync-badge" class="status-pill status-online">
+            <span class="status-dot"></span>
+            <span class="status-text">Synced</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="page-content">
+        <form id="product-form" onsubmit="saveProduct(event)">
+          <input type="hidden" id="edit-product-id">
+
+          <!-- General Product Info Card -->
+          <div class="card-retail p-4 mb-3">
+            <h5 class="fw-bold mb-3" style="color: var(--dark);">
+              <i class="fa-solid fa-shirt me-2 text-primary"></i>1. Product Details
+            </h5>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="prod-name" class="form-label-retail">Product Name <span class="text-danger">*</span></label>
+                <input type="text" id="prod-name" class="form-control form-control-retail" placeholder="e.g. Kids Frock, Ladies Cotton Kurti" required>
+              </div>
+              <div class="col-md-3">
+                <label for="prod-category" class="form-label-retail">Category <span class="text-danger">*</span></label>
+                <select id="prod-category" class="form-select form-select-retail" required>
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="prod-brand" class="form-label-retail">Brand</label>
+                <input type="text" id="prod-brand" class="form-control form-control-retail" value="RK Fashions">
+              </div>
+              <div class="col-md-4">
+                <label for="prod-subcategory" class="form-label-retail">Subcategory / Style (Optional)</label>
+                <input type="text" id="prod-subcategory" class="form-control form-control-retail" placeholder="e.g. Printed, Anarkali, Sleeveless">
+              </div>
+              <div class="col-md-4">
+                <label for="prod-supplier" class="form-label-retail">Supplier (Optional)</label>
+                <input type="text" id="prod-supplier" class="form-control form-control-retail" placeholder="e.g. Surat Wholesale, Mumbai Hub">
+              </div>
+              <div class="col-md-4">
+                <label for="prod-notes" class="form-label-retail">Notes (Optional)</label>
+                <input type="text" id="prod-notes" class="form-control form-control-retail" placeholder="Additional details or wash care">
+              </div>
+            </div>
+          </div>
+
+          <!-- Variations & Barcode Matrix Card -->
+          <div class="card-retail p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="fw-bold m-0" style="color: var(--dark);">
+                  <i class="fa-solid fa-layer-group me-2 text-primary"></i>2. Variations &amp; Barcode Matrix
+                </h5>
+                <small class="text-muted">Each variation has its own unique Code-128 barcode, price, and stock count.</small>
+              </div>
+              <button type="button" class="btn btn-sm btn-retail btn-outline-retail" onclick="addVariationRow()">
+                <i class="fa-solid fa-plus me-1"></i> Add Variation
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle" id="variant-matrix-table">
+                <thead class="bg-light small">
+                  <tr>
+                    <th style="min-width: 100px;">Size <span class="text-danger">*</span></th>
+                    <th style="min-width: 110px;">Color <span class="text-danger">*</span></th>
+                    <th style="min-width: 110px;">Purchase (₹)</th>
+                    <th style="min-width: 110px;">MRP (₹) <span class="text-danger">*</span></th>
+                    <th style="min-width: 110px;">Sale Price (₹) <span class="text-danger">*</span></th>
+                    <th style="min-width: 90px;">Stock <span class="text-danger">*</span></th>
+                    <th style="min-width: 80px;">Alert Qty</th>
+                    <th style="min-width: 160px;">Barcode (Code 128)</th>
+                    <th style="width: 50px; text-align: center;"></th>
+                  </tr>
+                </thead>
+                <tbody id="variants-tbody">
+                  <!-- Row items inserted dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Bottom Actions -->
+          <div class="d-flex justify-content-between align-items-center">
+            <a href="products.html" class="btn btn-retail btn-outline-retail">Cancel</a>
+            <div class="d-flex gap-2">
+              <button type="submit" id="btn-save-product" class="btn btn-retail btn-primary-retail px-4 fs-6">
+                <i class="fa-solid fa-floppy-disk me-2"></i> SAVE PRODUCT &amp; BARCODES
+              </button>
+            </div>
+          </div>
+        </form>
+      </main>
+    </div>
+
+    <div id="app-bottom-nav-container"></div>
+  </div>
+
+  <script src="js/lib/bootstrap.bundle.min.js"></script>
+  <script src="js/lib/jsbarcode.min.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/barcode.js"></script>
+  <script src="js/sales.js"></script>
+  <script src="js/inventory.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    let isEditMode = false;
+    let existingProductId = null;
+    let existingCreatedAt = null;
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      populateCategorySelect();
+
+      // Check URL parameters for edit mode (?id=xxx)
+      const urlParams = new URLSearchParams(window.location.search);
+      const prodId = urlParams.get('id');
+
+      if (prodId) {
+        await loadProductForEdit(prodId);
+      } else {
+        // Initial new row
+        await addVariationRow('28', 'Pink', 250, 699, 499, 10, 3);
+      }
+    });
+
+    function populateCategorySelect() {
+      const select = document.getElementById('prod-category');
+      window.productService.CATEGORIES.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+    }
+
+    async function addVariationRow(size = 'Free Size', color = 'Standard', purchase = 0, mrp = 0, selling = 0, stock = 10, alert = 3, existingBarcode = null, variantId = null) {
+      const tbody = document.getElementById('variants-tbody');
+      const tr = document.createElement('tr');
+
+      // Auto-generate barcode if not existing
+      const barcode = existingBarcode || await window.barcodeService.generateUniqueBarcode();
+
+      tr.dataset.variantId = variantId || '';
+      tr.innerHTML = `
+        <td>
+          <input type="text" class="form-control form-control-sm v-size" value="${size}" list="sizes-datalist" required>
+        </td>
+        <td>
+          <input type="text" class="form-control form-control-sm v-color" value="${color}" required>
+        </td>
+        <td>
+          <input type="number" class="form-control form-control-sm v-purchase" value="${purchase}" min="0" step="any">
+        </td>
+        <td>
+          <input type="number" class="form-control form-control-sm v-mrp" value="${mrp}" min="0" step="any" required>
+        </td>
+        <td>
+          <input type="number" class="form-control form-control-sm v-selling" value="${selling}" min="0" step="any" required>
+        </td>
+        <td>
+          <input type="number" class="form-control form-control-sm v-stock" value="${stock}" min="0" required>
+        </td>
+        <td>
+          <input type="number" class="form-control form-control-sm v-alert" value="${alert}" min="0">
+        </td>
+        <td>
+          <div class="input-group input-group-sm">
+            <input type="text" class="form-control v-barcode font-monospace fw-bold" value="${barcode}" readonly>
+            <button type="button" class="btn btn-outline-secondary" title="Copy Barcode" onclick="navigator.clipboard.writeText('${barcode}')">
+              <i class="fa-solid fa-copy"></i>
+            </button>
+          </div>
+        </td>
+        <td class="text-center">
+          <button type="button" class="btn btn-sm text-danger border-0" onclick="removeVariationRow(this)" title="Delete Row">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+    }
+
+    function removeVariationRow(btn) {
+      const tbody = document.getElementById('variants-tbody');
+      if (tbody.querySelectorAll('tr').length <= 1) {
+        window.app.showToast('At least one variation row is required.', 'warning');
+        return;
+      }
+      btn.closest('tr').remove();
+    }
+
+    async function loadProductForEdit(productId) {
+      const result = await window.productService.getProductWithVariants(productId);
+      if (!result) {
+        window.app.showToast('Product not found.', 'danger');
+        return;
+      }
+
+      isEditMode = true;
+      existingProductId = result.product.id;
+      existingCreatedAt = result.product.createdAt;
+
+      document.getElementById('page-title').innerHTML = `<i class="fa-solid fa-pen-to-square me-2 text-warning"></i>Edit Product: ${result.product.name}`;
+      document.getElementById('edit-product-id').value = result.product.id;
+      document.getElementById('prod-name').value = result.product.name;
+      document.getElementById('prod-category').value = result.product.category;
+      document.getElementById('prod-brand').value = result.product.brand || '';
+      document.getElementById('prod-subcategory').value = result.product.subcategory || '';
+      document.getElementById('prod-supplier').value = result.product.supplier || '';
+      document.getElementById('prod-notes').value = result.product.notes || '';
+
+      const tbody = document.getElementById('variants-tbody');
+      tbody.innerHTML = '';
+
+      for (const v of result.variants) {
+        await addVariationRow(v.size, v.color, v.purchasePrice, v.mrp, v.sellingPrice, v.stock, v.lowStockThreshold, v.barcode, v.id);
+      }
+    }
+
+    async function saveProduct(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('btn-save-product');
+      saveBtn.disabled = true;
+
+      const productData = {
+        id: isEditMode ? existingProductId : null,
+        name: document.getElementById('prod-name').value,
+        category: document.getElementById('prod-category').value,
+        brand: document.getElementById('prod-brand').value,
+        subcategory: document.getElementById('prod-subcategory').value,
+        supplier: document.getElementById('prod-supplier').value,
+        notes: document.getElementById('prod-notes').value,
+        createdAt: existingCreatedAt
+      };
+
+      const rows = document.querySelectorAll('#variants-tbody tr');
+      const variantsList = [];
+
+      rows.forEach(tr => {
+        variantsList.push({
+          id: tr.dataset.variantId || null,
+          size: tr.querySelector('.v-size').value.trim(),
+          color: tr.querySelector('.v-color').value.trim(),
+          purchasePrice: Number(tr.querySelector('.v-purchase').value) || 0,
+          mrp: Number(tr.querySelector('.v-mrp').value) || 0,
+          sellingPrice: Number(tr.querySelector('.v-selling').value) || 0,
+          stock: Number(tr.querySelector('.v-stock').value) || 0,
+          lowStockThreshold: Number(tr.querySelector('.v-alert').value) || 3,
+          barcode: tr.querySelector('.v-barcode').value.trim()
+        });
+      });
+
+      try {
+        await window.productService.saveProduct(productData, variantsList);
+        window.app.showToast('Product and variations saved successfully!', 'success');
+        setTimeout(() => {
+          window.location.href = 'products.html';
+        }, 600);
+      } catch (err) {
+        window.app.showToast(err.message, 'danger');
+        saveBtn.disabled = false;
+      }
+    }
+  </script>
+
+  <!-- Datalist for Standard Clothing Sizes -->
+  <datalist id="sizes-datalist">
+    <option value="18"></option><option value="20"></option><option value="22"></option>
+    <option value="24"></option><option value="26"></option><option value="28"></option>
+    <option value="30"></option><option value="32"></option><option value="34"></option>
+    <option value="36"></option><option value="38"></option><option value="40"></option>
+    <option value="42"></option><option value="44"></option><option value="S"></option>
+    <option value="M"></option><option value="L"></option><option value="XL"></option>
+    <option value="2XL"></option><option value="3XL"></option><option value="Free Size"></option>
+  </datalist>
+</body>
+</html>

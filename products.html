@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products — RK FASHIONS</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
+  <meta name="theme-color" content="#74512D">
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/fontawesome.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    @media (max-width: 768px) {
+      .table-desktop-view { display: none; }
+      .cards-mobile-view { display: flex !important; }
+    }
+    @media (min-width: 769px) {
+      .table-desktop-view { display: block; }
+      .cards-mobile-view { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-wrapper">
+    <div id="app-sidebar-container"></div>
+
+    <div class="main-wrapper">
+      <header class="top-header">
+        <div class="header-left">
+          <h2 class="header-page-title"><i class="fa-solid fa-tags me-2 text-warning"></i>Product Catalog</h2>
+        </div>
+        <div class="header-right">
+          <div id="global-sync-badge" class="status-pill status-online">
+            <span class="status-dot"></span>
+            <span class="status-text">Synced</span>
+          </div>
+          <a href="product-form.html" class="btn btn-sm btn-retail btn-primary-retail">
+            <i class="fa-solid fa-plus me-1"></i> Add Product
+          </a>
+        </div>
+      </header>
+
+      <main class="page-content">
+        <!-- Search & Filter Controls -->
+        <div class="card-retail p-3 mb-3">
+          <div class="row g-2 align-items-center">
+            <div class="col-md-5">
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                <input
+                  type="text"
+                  id="product-search-input"
+                  class="form-control form-control-retail border-start-0"
+                  placeholder="Search by name, barcode, color, brand..."
+                  oninput="filterProducts()"
+                >
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <select id="category-filter" class="form-select form-select-retail" onchange="filterProducts()">
+                <option value="">All Categories</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-2">
+              <select id="stock-filter" class="form-select form-select-retail" onchange="filterProducts()">
+                <option value="">All Stock</option>
+                <option value="in_stock">In Stock (&gt; 0)</option>
+                <option value="low_stock">Low Stock (≤ Alert)</option>
+                <option value="out_of_stock">Out of Stock (0)</option>
+              </select>
+            </div>
+            <div class="col-md-2 text-end">
+              <span class="small text-muted" id="products-count-badge">Loading...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Products Desktop Table -->
+        <div class="card-retail table-desktop-view">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="bg-light small">
+                <tr>
+                  <th>Product Name</th>
+                  <th>Barcode</th>
+                  <th>Category</th>
+                  <th>Size</th>
+                  <th>Color</th>
+                  <th class="text-end">MRP</th>
+                  <th class="text-end">Sale Price</th>
+                  <th class="text-center">Stock</th>
+                  <th class="text-center">Status</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="products-tbody">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Products Mobile Card View -->
+        <div id="products-mobile-cards" class="cards-mobile-view flex-column gap-2">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="products-empty-state" class="empty-state d-none">
+          <i class="fa-solid fa-shirt empty-state-icon"></i>
+          <div class="empty-state-title">No products found</div>
+          <p class="small text-muted">No items matched your filter or your inventory is empty.</p>
+          <a href="product-form.html" class="btn btn-retail btn-primary-retail btn-sm mt-2">
+            <i class="fa-solid fa-plus me-1"></i> Add New Product
+          </a>
+        </div>
+      </main>
+    </div>
+
+    <div id="app-bottom-nav-container"></div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-body text-center p-4">
+          <i class="fa-solid fa-triangle-exclamation fa-3x text-warning mb-3"></i>
+          <h5 class="fw-bold mb-2">Archive Product?</h5>
+          <p class="text-muted small">This product will be archived and removed from POS lookup.</p>
+          <div class="d-flex gap-2 justify-content-center mt-3">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" id="btn-confirm-delete" class="btn btn-sm btn-danger px-3">Confirm Archive</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/lib/bootstrap.bundle.min.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/barcode.js"></script>
+  <script src="js/sales.js"></script>
+  <script src="js/inventory.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    let allProductRows = [];
+    let productToDelete = null;
+    let deleteModal = null;
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+      populateCategoryDropdown();
+      await loadProducts();
+
+      document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
+        if (productToDelete) {
+          await window.productService.archiveProduct(productToDelete);
+          deleteModal.hide();
+          window.app.showToast('Product archived successfully', 'warning');
+          await loadProducts();
+        }
+      });
+    });
+
+    function populateCategoryDropdown() {
+      const select = document.getElementById('category-filter');
+      window.productService.CATEGORIES.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+    }
+
+    async function loadProducts() {
+      const products = await window.productService.getAllProducts();
+      allProductRows = [];
+
+      // Flatten products into variant rows for precise barcode and variation listing
+      products.filter(p => p.status !== 'ARCHIVED').forEach(p => {
+        if (p.variants && p.variants.length > 0) {
+          p.variants.forEach(v => {
+            allProductRows.push({
+              productId: p.id,
+              productName: p.name,
+              category: p.category,
+              brand: p.brand,
+              variantId: v.id,
+              barcode: v.barcode,
+              size: v.size,
+              color: v.color,
+              mrp: v.mrp,
+              sellingPrice: v.sellingPrice,
+              stock: Number(v.stock) || 0,
+              lowStockThreshold: Number(v.lowStockThreshold) || 5,
+              status: v.status || 'ACTIVE'
+            });
+          });
+        }
+      });
+
+      filterProducts();
+    }
+
+    function filterProducts() {
+      const query = document.getElementById('product-search-input').value.toLowerCase().trim();
+      const category = document.getElementById('category-filter').value;
+      const stockFilter = document.getElementById('stock-filter').value;
+
+      const filtered = allProductRows.filter(row => {
+        const matchesQuery = !query ||
+          row.productName.toLowerCase().includes(query) ||
+          row.barcode.toLowerCase().includes(query) ||
+          row.color.toLowerCase().includes(query) ||
+          row.size.toLowerCase().includes(query) ||
+          (row.brand && row.brand.toLowerCase().includes(query));
+
+        const matchesCat = !category || row.category === category;
+
+        let matchesStock = true;
+        if (stockFilter === 'in_stock') matchesStock = row.stock > 0;
+        else if (stockFilter === 'low_stock') matchesStock = row.stock <= row.lowStockThreshold && row.stock > 0;
+        else if (stockFilter === 'out_of_stock') matchesStock = row.stock === 0;
+
+        return matchesQuery && matchesCat && matchesStock;
+      });
+
+      document.getElementById('products-count-badge').textContent = `Showing ${filtered.length} variations`;
+
+      renderTable(filtered);
+      renderCards(filtered);
+
+      const empty = document.getElementById('products-empty-state');
+      if (filtered.length === 0) {
+        empty.classList.remove('d-none');
+      } else {
+        empty.classList.add('d-none');
+      }
+    }
+
+    function renderTable(rows) {
+      const tbody = document.getElementById('products-tbody');
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td>
+            <div class="fw-bold text-dark">${r.productName}</div>
+            <small class="text-muted">${r.brand || 'RK Fashions'}</small>
+          </td>
+          <td><span class="badge bg-light text-dark border font-monospace fs-6">${r.barcode}</span></td>
+          <td><span class="badge bg-light text-muted border">${r.category}</span></td>
+          <td><strong class="text-dark">${r.size}</strong></td>
+          <td>${r.color}</td>
+          <td class="text-end text-muted"><del>₹${r.mrp}</del></td>
+          <td class="text-end fw-bold text-dark">₹${r.sellingPrice}</td>
+          <td class="text-center">
+            <span class="badge ${r.stock === 0 ? 'bg-danger' : r.stock <= r.lowStockThreshold ? 'bg-warning text-dark' : 'bg-success'}">
+              ${r.stock} pcs
+            </span>
+          </td>
+          <td class="text-center">
+            <span class="badge bg-light text-success border">Active</span>
+          </td>
+          <td class="text-center">
+            <div class="btn-group btn-group-sm">
+              <a href="barcode.html?barcode=${r.barcode}" class="btn btn-outline-secondary" title="Print Tag">
+                <i class="fa-solid fa-barcode"></i>
+              </a>
+              <a href="product-form.html?id=${r.productId}" class="btn btn-outline-secondary" title="Edit Product">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </a>
+              <button class="btn btn-outline-danger" title="Archive" onclick="confirmDelete('${r.productId}')">
+                <i class="fa-solid fa-box-archive"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderCards(rows) {
+      const container = document.getElementById('products-mobile-cards');
+      container.innerHTML = rows.map(r => `
+        <div class="card-retail p-3">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <div class="fw-bold fs-6 text-dark">${r.productName}</div>
+              <div class="badge bg-light text-dark border font-monospace mt-1">#${r.barcode}</div>
+            </div>
+            <span class="badge ${r.stock === 0 ? 'bg-danger' : r.stock <= r.lowStockThreshold ? 'bg-warning text-dark' : 'bg-success'}">
+              ${r.stock} in stock
+            </span>
+          </div>
+
+          <div class="d-flex justify-content-between text-muted small my-2 py-2 border-top border-bottom">
+            <span>Size: <strong>${r.size}</strong></span>
+            <span>Color: <strong>${r.color}</strong></span>
+            <span>MRP: <del>₹${r.mrp}</del></span>
+            <span class="fw-bold text-dark fs-6">₹${r.sellingPrice}</span>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 mt-2">
+            <a href="barcode.html?barcode=${r.barcode}" class="btn btn-sm btn-outline-retail">
+              <i class="fa-solid fa-barcode me-1"></i>Tag
+            </a>
+            <a href="product-form.html?id=${r.productId}" class="btn btn-sm btn-outline-retail">
+              <i class="fa-solid fa-pen-to-square me-1"></i>Edit
+            </a>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function confirmDelete(productId) {
+      productToDelete = productId;
+      deleteModal.show();
+    }
+  </script>
+</body>
+</html>

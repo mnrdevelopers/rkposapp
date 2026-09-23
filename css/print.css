@@ -1,0 +1,277 @@
+/* ==========================================================================
+   RK FASHIONS — Dedicated Print Stylesheet
+   Thermal Receipt (58mm/80mm) & Price Tag Label Printing
+   ========================================================================== */
+
+/* Hide screen elements during print */
+@media print {
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    font-family: 'Courier New', Courier, monospace, sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .sidebar,
+  .top-header,
+  .bottom-nav,
+  .btn,
+  button,
+  .no-print,
+  .modal-backdrop,
+  .modal-header,
+  .modal-footer {
+    display: none !important;
+  }
+
+  /* Show only designated print container */
+  body * {
+    visibility: hidden;
+  }
+
+  #printable-receipt-area,
+  #printable-receipt-area *,
+  #printable-tags-area,
+  #printable-tags-area * {
+    visibility: visible;
+  }
+
+  #printable-receipt-area,
+  #printable-tags-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* ==========================================================================
+   1. THERMAL RECEIPT FORMAT (58mm / 80mm)
+   ========================================================================== */
+.thermal-receipt {
+  background: #FFFFFF;
+  color: #000000;
+  margin: 0 auto;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  line-height: 1.25;
+  box-sizing: border-box;
+}
+
+/* Default 80mm receipt width (approx 72-80mm print area) */
+.thermal-receipt.receipt-80mm {
+  width: 78mm;
+  padding: 3mm 2mm;
+}
+
+/* 58mm receipt width (approx 48-56mm print area) */
+.thermal-receipt.receipt-58mm {
+  width: 54mm;
+  padding: 2mm 1mm;
+  font-size: 10.5px;
+}
+
+.thermal-receipt .receipt-center {
+  text-align: center;
+}
+
+.thermal-receipt .receipt-store-title {
+  font-size: 16px;
+  font-weight: 900;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.thermal-receipt.receipt-58mm .receipt-store-title {
+  font-size: 13.5px;
+}
+
+.thermal-receipt .receipt-store-sub {
+  font-size: 11px;
+  font-weight: 700;
+  margin: 2px 0;
+}
+
+.thermal-receipt .receipt-meta {
+  font-size: 10.5px;
+  margin: 2px 0;
+}
+
+.thermal-receipt .receipt-divider {
+  border-top: 1px dashed #000;
+  margin: 5px 0;
+}
+
+.thermal-receipt .receipt-double-divider {
+  border-top: 1px double #000;
+  margin: 5px 0;
+}
+
+.thermal-receipt table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: inherit;
+}
+
+.thermal-receipt th {
+  text-align: left;
+  padding: 3px 0;
+  font-weight: 800;
+  border-bottom: 1px dashed #000;
+}
+
+.thermal-receipt td {
+  padding: 3px 0;
+  vertical-align: top;
+}
+
+.thermal-receipt .col-right {
+  text-align: right;
+}
+
+.thermal-receipt .col-center {
+  text-align: center;
+}
+
+.thermal-receipt .receipt-item-title {
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.thermal-receipt .receipt-item-variant {
+  font-size: 9.5px;
+  color: #333;
+}
+
+.thermal-receipt .receipt-total-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 2px 0;
+  font-size: 12px;
+}
+
+.thermal-receipt.receipt-58mm .receipt-total-row {
+  font-size: 11px;
+}
+
+.thermal-receipt .receipt-grand-total {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.thermal-receipt.receipt-58mm .receipt-grand-total {
+  font-size: 13px;
+}
+
+.thermal-receipt .receipt-footer {
+  text-align: center;
+  font-size: 10px;
+  margin-top: 8px;
+}
+
+/* ==========================================================================
+   2. PRICE TAG LABELS FORMAT (Thermal Sticker / A4 Sheet)
+   ========================================================================== */
+.price-tags-sheet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4mm;
+  padding: 4mm;
+  justify-content: flex-start;
+}
+
+.price-tag-item {
+  box-sizing: border-box;
+  border: 1px dashed #333;
+  padding: 3mm 2mm;
+  text-align: center;
+  page-break-inside: avoid;
+  font-family: 'Poppins', sans-serif, Arial;
+  background: #FFF;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Default standard label: 50mm x 35mm */
+.price-tag-item.size-50x35 {
+  width: 50mm;
+  height: 35mm;
+}
+
+/* 50mm x 25mm compact label */
+.price-tag-item.size-50x25 {
+  width: 50mm;
+  height: 25mm;
+  padding: 1.5mm 1.5mm;
+}
+
+/* 38mm x 25mm jewel/small label */
+.price-tag-item.size-38x25 {
+  width: 38mm;
+  height: 25mm;
+  padding: 1.5mm 1mm;
+}
+
+.price-tag-item .tag-brand {
+  font-weight: 900;
+  font-size: 11px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.price-tag-item .tag-sub {
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: #333;
+}
+
+.price-tag-item .tag-name {
+  font-size: 10px;
+  font-weight: 800;
+  margin: 1px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.price-tag-item .tag-specs {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8.5px;
+  font-weight: 700;
+  border-top: 0.5px solid #000;
+  border-bottom: 0.5px solid #000;
+  padding: 1px 0;
+  margin: 1px 0;
+}
+
+.price-tag-item .tag-prices {
+  display: flex;
+  justify-content: space-around;
+  align-items: baseline;
+  font-size: 9px;
+}
+
+.price-tag-item .tag-prices .mrp {
+  text-decoration: line-through;
+  font-size: 8px;
+  color: #555;
+}
+
+.price-tag-item .tag-prices .sale {
+  font-weight: 900;
+  font-size: 12px;
+}
+
+.price-tag-item svg.tag-barcode {
+  width: 90%;
+  height: 28px;
+  margin: 1px auto 0 auto;
+}

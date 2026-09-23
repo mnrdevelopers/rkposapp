@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — RK FASHIONS</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
+  <meta name="theme-color" content="#74512D">
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/fontawesome.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-wrapper">
+    <div id="app-sidebar-container"></div>
+
+    <div class="main-wrapper">
+      <header class="top-header">
+        <div class="header-left">
+          <h2 class="header-page-title"><i class="fa-solid fa-chart-pie me-2 text-warning"></i>Dashboard</h2>
+        </div>
+        <div class="header-right">
+          <div id="global-sync-badge" class="status-pill status-online">
+            <span class="status-dot"></span>
+            <span class="status-text">Synced</span>
+          </div>
+          <a href="sale.html" class="btn btn-sm btn-retail btn-secondary-retail">
+            <i class="fa-solid fa-cash-register me-1"></i> New Sale
+          </a>
+        </div>
+      </header>
+
+      <main class="page-content">
+        <!-- Welcome Greeting Banner -->
+        <div class="card-retail p-4 mb-4" style="background: linear-gradient(135deg, var(--dark) 0%, var(--primary) 100%); color: #fff;">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-warning text-dark fw-bold">RK FASHIONS</span>
+                <span class="small opacity-75">Ladies &amp; Kids Wear</span>
+              </div>
+              <h3 class="fw-bold mb-1" id="greeting-text">Good Afternoon 👋</h3>
+              <p class="mb-0 opacity-75 small">Here is your live retail sales and inventory status today.</p>
+            </div>
+            <div class="d-flex gap-2">
+              <a href="sale.html" class="btn btn-retail btn-secondary-retail">
+                <i class="fa-solid fa-cash-register me-1"></i> Start Billing
+              </a>
+              <a href="product-form.html" class="btn btn-retail btn-outline-light">
+                <i class="fa-solid fa-plus me-1"></i> Add Product
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- First Time User Welcome State (if 0 products) -->
+        <div id="onboarding-banner" class="card-retail p-4 mb-4 text-center d-none" style="border: 2px dashed var(--secondary);">
+          <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">👗 👧 🛍️</div>
+          <h4 class="fw-bold" style="color: var(--dark);">Welcome to RK FASHIONS 👋</h4>
+          <p class="text-muted">Your store inventory is currently empty. Let's add your first clothing item or load demo products to begin.</p>
+          <div class="d-flex justify-content-center gap-2 mt-3">
+            <a href="product-form.html" class="btn btn-retail btn-primary-retail">
+              <i class="fa-solid fa-plus me-1"></i> Add First Product
+            </a>
+            <button type="button" class="btn btn-retail btn-outline-retail" onclick="loadDemoCatalog()">
+              <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Load Sample Demo Inventory
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Grid -->
+        <div class="row g-3 mb-4">
+          <div class="col-sm-6 col-xl-2">
+            <div class="kpi-card">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="kpi-label">Today's Sales</div>
+                <div class="kpi-icon" style="background: var(--success-bg); color: var(--success);"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+              </div>
+              <div class="kpi-value text-success" id="kpi-sales">₹0</div>
+              <div class="small text-muted mt-1">Net revenue</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6 col-xl-2">
+            <div class="kpi-card">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="kpi-label">Today's Bills</div>
+                <div class="kpi-icon" style="background: var(--info-bg); color: var(--info);"><i class="fa-solid fa-receipt"></i></div>
+              </div>
+              <div class="kpi-value" id="kpi-bills">0</div>
+              <div class="small text-muted mt-1">Completed orders</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6 col-xl-2">
+            <div class="kpi-card">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="kpi-label">Total Products</div>
+                <div class="kpi-icon" style="background: var(--primary-light); color: var(--primary);"><i class="fa-solid fa-tags"></i></div>
+              </div>
+              <div class="kpi-value" id="kpi-products">0</div>
+              <div class="small text-muted mt-1">Master catalog items</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6 col-xl-2">
+            <div class="kpi-card">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="kpi-label">Current Stock</div>
+                <div class="kpi-icon" style="background: #FFF8E1; color: #FFA000;"><i class="fa-solid fa-boxes-stacked"></i></div>
+              </div>
+              <div class="kpi-value" id="kpi-stock">0</div>
+              <div class="small text-muted mt-1">Total pieces in shop</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6 col-xl-2">
+            <div class="kpi-card">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="kpi-label">Low Stock</div>
+                <div class="kpi-icon" style="background: var(--danger-bg); color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+              </div>
+              <div class="kpi-value text-danger" id="kpi-low-stock">0</div>
+              <div class="small text-muted mt-1">Needs reordering</div>
+            </div>
+          </div>
+
+          <div class="col-sm-6 col-xl-2">
+            <div class="kpi-card">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="kpi-label">Pending Sync</div>
+                <div class="kpi-icon" style="background: var(--warning-bg); color: var(--warning);"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+              </div>
+              <div class="kpi-value text-warning" id="kpi-pending-sync">0</div>
+              <div class="small text-muted mt-1" id="kpi-sync-desc">Offline queue</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Two Columns: Recent Sales & Low Stock Alerts -->
+        <div class="row g-3">
+          <!-- Recent Sales Table -->
+          <div class="col-lg-7">
+            <div class="card-retail">
+              <div class="card-header-retail">
+                <h6 class="m-0 fw-bold" style="color: var(--dark);">
+                  <i class="fa-solid fa-clock-rotate-left me-2 text-warning"></i>Today's Recent Sales
+                </h6>
+                <a href="sales-history.html" class="small fw-bold text-decoration-none" style="color: var(--primary);">View All &rarr;</a>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="bg-light small">
+                    <tr>
+                      <th>Bill No</th>
+                      <th>Time</th>
+                      <th>Items</th>
+                      <th>Payment</th>
+                      <th class="text-end">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recent-sales-tbody">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+                <div id="recent-sales-empty" class="p-4 text-center text-muted small d-none">
+                  No sales recorded today yet.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Low Stock Alert Cards -->
+          <div class="col-lg-5">
+            <div class="card-retail">
+              <div class="card-header-retail">
+                <h6 class="m-0 fw-bold text-danger">
+                  <i class="fa-solid fa-triangle-exclamation me-2"></i>Low Stock Alerts
+                </h6>
+                <a href="products.html" class="small fw-bold text-decoration-none" style="color: var(--primary);">Manage Stock &rarr;</a>
+              </div>
+              <div class="p-3">
+                <div id="low-stock-list" class="d-flex flex-direction-column flex-column gap-2">
+                  <!-- Populated dynamically -->
+                </div>
+                <div id="low-stock-empty" class="p-3 text-center text-muted small d-none">
+                  <i class="fa-solid fa-circle-check text-success fa-lg me-1"></i> All stock levels healthy!
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div id="app-bottom-nav-container"></div>
+  </div>
+
+  <script src="js/lib/bootstrap.bundle.min.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/barcode.js"></script>
+  <script src="js/sales.js"></script>
+  <script src="js/inventory.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', async () => {
+      setGreeting();
+      await loadDashboardMetrics();
+    });
+
+    function setGreeting() {
+      const hour = new Date().getHours();
+      let greeting = 'Good Morning';
+      if (hour >= 12 && hour < 17) greeting = 'Good Afternoon';
+      else if (hour >= 17) greeting = 'Good Evening';
+
+      const user = window.authService ? window.authService.getCurrentUser() : null;
+      const name = user ? user.displayName : 'Team';
+      document.getElementById('greeting-text').textContent = `${greeting}, ${name} 👋`;
+    }
+
+    async function loadDashboardMetrics() {
+      const summary = await window.reportsService.getDashboardSummary();
+
+      document.getElementById('kpi-sales').textContent = `₹${summary.todaySales}`;
+      document.getElementById('kpi-bills').textContent = summary.todayBills;
+      document.getElementById('kpi-products').textContent = summary.totalProducts;
+      document.getElementById('kpi-stock').textContent = summary.totalStock;
+      document.getElementById('kpi-low-stock').textContent = summary.lowStockCount;
+      document.getElementById('kpi-pending-sync').textContent = summary.pendingSync;
+
+      // Onboarding banner condition
+      const onboarding = document.getElementById('onboarding-banner');
+      if (summary.totalProducts === 0) {
+        onboarding.classList.remove('d-none');
+      } else {
+        onboarding.classList.add('d-none');
+      }
+
+      // Populate recent sales
+      const tbody = document.getElementById('recent-sales-tbody');
+      const emptySales = document.getElementById('recent-sales-empty');
+
+      if (!summary.recentSales || summary.recentSales.length === 0) {
+        tbody.innerHTML = '';
+        emptySales.classList.remove('d-none');
+      } else {
+        emptySales.classList.add('d-none');
+        tbody.innerHTML = summary.recentSales.map(sale => `
+          <tr>
+            <td class="fw-bold font-monospace">${sale.billNo}</td>
+            <td class="text-muted small">${sale.time}</td>
+            <td>${sale.itemCount} items</td>
+            <td><span class="badge bg-light text-dark border">${sale.paymentMethod}</span></td>
+            <td class="text-end fw-bold">₹${sale.grandTotal}</td>
+          </tr>
+        `).join('');
+      }
+
+      // Populate low stock
+      const lowStockContainer = document.getElementById('low-stock-list');
+      const emptyLowStock = document.getElementById('low-stock-empty');
+
+      if (!summary.lowStockItems || summary.lowStockItems.length === 0) {
+        lowStockContainer.innerHTML = '';
+        emptyLowStock.classList.remove('d-none');
+      } else {
+        emptyLowStock.classList.add('d-none');
+        lowStockContainer.innerHTML = summary.lowStockItems.map(item => `
+          <div class="p-2 rounded border d-flex justify-content-between align-items-center" style="background: var(--surface-alt);">
+            <div>
+              <div class="fw-bold small text-dark">${item.product.name}</div>
+              <div class="small text-muted font-monospace">Size: ${item.variant.size} | Col: ${item.variant.color}</div>
+            </div>
+            <div class="text-end">
+              <span class="badge ${item.variant.stock === 0 ? 'bg-danger' : 'bg-warning text-dark'} fw-bold">
+                ${item.variant.stock} left
+              </span>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    async function loadDemoCatalog() {
+      if (confirm('Load sample ladies and kids wear products?')) {
+        await window.settingsService.seedDemoData();
+        window.app.showToast('Demo products loaded successfully!', 'success');
+        await loadDashboardMetrics();
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barcode &amp; Price Tag Generator — RK FASHIONS</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
+  <meta name="theme-color" content="#74512D">
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/fontawesome.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/print.css">
+</head>
+<body>
+  <div class="app-wrapper">
+    <div id="app-sidebar-container"></div>
+
+    <div class="main-wrapper">
+      <header class="top-header">
+        <div class="header-left">
+          <h2 class="header-page-title"><i class="fa-solid fa-barcode me-2 text-warning"></i>Barcode Price Tag Generator</h2>
+        </div>
+        <div class="header-right">
+          <div id="global-sync-badge" class="status-pill status-online">
+            <span class="status-dot"></span>
+            <span class="status-text">Synced</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="page-content">
+        <div class="row g-4">
+          <!-- Left Column: Controls & Selectors -->
+          <div class="col-lg-6">
+            <div class="card-retail p-4 mb-3">
+              <h5 class="fw-bold mb-3" style="color: var(--dark);">
+                <i class="fa-solid fa-sliders me-2 text-primary"></i>Tag Configuration
+              </h5>
+
+              <!-- Product Variation Selector -->
+              <div class="mb-3">
+                <label for="tag-variant-select" class="form-label-retail">Select Product Variation <span class="text-danger">*</span></label>
+                <select id="tag-variant-select" class="form-select form-select-retail" onchange="handleVariantChange()">
+                  <option value="">-- Choose an item from inventory --</option>
+                </select>
+              </div>
+
+              <!-- Copies & Size Preset -->
+              <div class="row g-3 mb-3">
+                <div class="col-6">
+                  <label for="tag-copies" class="form-label-retail">Print Copies</label>
+                  <input type="number" id="tag-copies" class="form-control form-control-retail" min="1" max="500" value="1" oninput="updatePreview()">
+                </div>
+                <div class="col-6">
+                  <label for="tag-size-preset" class="form-label-retail">Label Size</label>
+                  <select id="tag-size-preset" class="form-select form-select-retail" onchange="updatePreview()">
+                    <option value="size-50x35" selected>Standard (50mm × 35mm)</option>
+                    <option value="size-50x25">Compact (50mm × 25mm)</option>
+                    <option value="size-38x25">Small (38mm × 25mm)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Display Toggle Checkboxes -->
+              <div class="p-3 rounded mb-3" style="background: var(--surface-alt); border: 1px solid var(--border);">
+                <span class="small fw-bold text-dark d-block mb-2">Display Fields on Sticker:</span>
+                <div class="row g-2">
+                  <div class="col-6">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="chk-mrp" checked onchange="updatePreview()">
+                      <label class="form-check-label small" for="chk-mrp">Show MRP</label>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="chk-sale" checked onchange="updatePreview()">
+                      <label class="form-check-label small" for="chk-sale">Show Sale Price</label>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="chk-size" checked onchange="updatePreview()">
+                      <label class="form-check-label small" for="chk-size">Show Size</label>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="chk-color" checked onchange="updatePreview()">
+                      <label class="form-check-label small" for="chk-color">Show Color</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Print Action -->
+              <button type="button" id="btn-print-tags" class="btn btn-retail btn-primary-retail w-100 py-3 fs-6" onclick="printTags()" disabled>
+                <i class="fa-solid fa-print me-2"></i> PRINT PRICE TAGS
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Column: Live Price Tag Visual Preview -->
+          <div class="col-lg-6">
+            <div class="card-retail p-4 text-center">
+              <h5 class="fw-bold mb-3 text-start" style="color: var(--dark);">
+                <i class="fa-solid fa-eye me-2 text-primary"></i>Live Tag Preview
+              </h5>
+
+              <div id="preview-wrapper" class="py-4" style="background: #EFEFEF; border-radius: var(--radius-md);">
+                <!-- Rendered tag -->
+                <div id="preview-tag-box" class="price-tag-preview size-50x35" style="width: 220px; background: #fff; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+                  <div class="tag-store-title">RK FASHIONS</div>
+                  <div class="tag-store-sub">LADIES &amp; KIDS WEAR</div>
+                  <div class="tag-prod-name" id="prev-prod-name">Kids Party Frock</div>
+
+                  <div class="tag-meta-row" id="prev-meta-row">
+                    <span id="prev-size">SIZE: 28</span>
+                    <span id="prev-color">COLOR: PINK</span>
+                  </div>
+
+                  <div class="tag-price-row">
+                    <span class="tag-mrp" id="prev-mrp">MRP: ₹799</span>
+                    <span class="tag-sale-price" id="prev-sale">SALE: ₹599</span>
+                  </div>
+
+                  <svg id="preview-barcode-svg" class="tag-barcode-svg"></svg>
+                </div>
+              </div>
+
+              <div class="mt-3 text-muted small">
+                Optimized for thermal label barcode printers &amp; standard sticker sheets.
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div id="app-bottom-nav-container"></div>
+  </div>
+
+  <script src="js/lib/bootstrap.bundle.min.js"></script>
+  <script src="js/lib/jsbarcode.min.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/barcode.js"></script>
+  <script src="js/sales.js"></script>
+  <script src="js/inventory.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/printing.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    let allVariants = [];
+    let selectedItem = null;
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadVariantsDropdown();
+
+      // Check if barcode parameter was passed in URL (e.g. barcode.html?barcode=89026000001)
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetBarcode = urlParams.get('barcode');
+
+      if (targetBarcode) {
+        const select = document.getElementById('tag-variant-select');
+        select.value = targetBarcode;
+        handleVariantChange();
+      }
+    });
+
+    async function loadVariantsDropdown() {
+      const select = document.getElementById('tag-variant-select');
+      const products = await window.productService.getAllProducts();
+      allVariants = [];
+
+      products.filter(p => p.status !== 'ARCHIVED').forEach(p => {
+        (p.variants || []).forEach(v => {
+          const item = {
+            productId: p.id,
+            productName: p.name,
+            variantId: v.id,
+            barcode: v.barcode,
+            size: v.size,
+            color: v.color,
+            mrp: v.mrp,
+            sellingPrice: v.sellingPrice
+          };
+          allVariants.push(item);
+
+          const opt = document.createElement('option');
+          opt.value = v.barcode;
+          opt.textContent = `${p.name} — Size: ${v.size}, Col: ${v.color} (₹${v.sellingPrice}) [#${v.barcode}]`;
+          select.appendChild(opt);
+        });
+      });
+
+      if (allVariants.length > 0 && !selectedItem) {
+        select.selectedIndex = 1;
+        handleVariantChange();
+      }
+    }
+
+    function handleVariantChange() {
+      const select = document.getElementById('tag-variant-select');
+      const barcode = select.value;
+      selectedItem = allVariants.find(v => v.barcode === barcode);
+
+      const printBtn = document.getElementById('btn-print-tags');
+      if (selectedItem) {
+        printBtn.disabled = false;
+        updatePreview();
+      } else {
+        printBtn.disabled = true;
+      }
+    }
+
+    function updatePreview() {
+      if (!selectedItem) return;
+
+      const showMrp = document.getElementById('chk-mrp').checked;
+      const showSale = document.getElementById('chk-sale').checked;
+      const showSize = document.getElementById('chk-size').checked;
+      const showColor = document.getElementById('chk-color').checked;
+
+      document.getElementById('prev-prod-name').textContent = selectedItem.productName;
+      document.getElementById('prev-size').textContent = `SIZE: ${selectedItem.size}`;
+      document.getElementById('prev-size').style.display = showSize ? 'inline' : 'none';
+
+      document.getElementById('prev-color').textContent = `COL: ${selectedItem.color}`;
+      document.getElementById('prev-color').style.display = showColor ? 'inline' : 'none';
+
+      document.getElementById('prev-mrp').textContent = `MRP: ₹${selectedItem.mrp}`;
+      document.getElementById('prev-mrp').style.display = showMrp ? 'inline' : 'none';
+
+      document.getElementById('prev-sale').textContent = `SALE: ₹${selectedItem.sellingPrice}`;
+      document.getElementById('prev-sale').style.display = showSale ? 'inline' : 'none';
+
+      // Render barcode on preview SVG
+      const svg = document.getElementById('preview-barcode-svg');
+      window.barcodeService.renderBarcode(svg, selectedItem.barcode, {
+        height: 38,
+        fontSize: 10,
+        margin: 1
+      });
+    }
+
+    async function printTags() {
+      if (!selectedItem) return;
+
+      const copies = parseInt(document.getElementById('tag-copies').value, 10) || 1;
+      const printItem = {
+        ...selectedItem,
+        copies: copies
+      };
+
+      await window.printingService.printPriceTags([printItem]);
+    }
+  </script>
+</body>
+</html>

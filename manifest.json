@@ -1,0 +1,20 @@
+{
+  "name": "RK FASHIONS — Ladies & Kids Wear POS",
+  "short_name": "RK Fashions",
+  "description": "Fast, Offline-First Retail POS & Barcode PWA for Ladies & Kids Wear",
+  "start_url": "./sale.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F8F4E1",
+  "theme_color": "#74512D",
+  "icons": [
+    {
+      "src": "./assets/icons/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "shopping"]
+}

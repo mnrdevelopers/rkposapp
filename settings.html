@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — RK FASHIONS</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
+  <meta name="theme-color" content="#74512D">
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/fontawesome.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-wrapper">
+    <div id="app-sidebar-container"></div>
+
+    <div class="main-wrapper">
+      <header class="top-header">
+        <div class="header-left">
+          <h2 class="header-page-title"><i class="fa-solid fa-gear me-2 text-warning"></i>Settings &amp; Configuration</h2>
+        </div>
+        <div class="header-right">
+          <div id="global-sync-badge" class="status-pill status-online">
+            <span class="status-dot"></span>
+            <span class="status-text">Synced</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="page-content">
+        <div class="row g-4">
+          <!-- Left Column: Store Profile & Billing Settings -->
+          <div class="col-lg-6">
+            <!-- Store Profile -->
+            <div class="card-retail p-4 mb-4">
+              <h5 class="fw-bold mb-3" style="color: var(--dark);">
+                <i class="fa-solid fa-store me-2 text-primary"></i>Store Profile
+              </h5>
+              <form id="store-settings-form" onsubmit="saveStoreSettings(event)">
+                <div class="mb-3">
+                  <label for="set-store-name" class="form-label-retail">Store Name</label>
+                  <input type="text" id="set-store-name" class="form-control form-control-retail" value="RK FASHIONS" required>
+                </div>
+                <div class="mb-3">
+                  <label for="set-store-sub" class="form-label-retail">Subtitle / Slogan</label>
+                  <input type="text" id="set-store-sub" class="form-control form-control-retail" value="Ladies & Kids Wear">
+                </div>
+                <div class="mb-3">
+                  <label for="set-address" class="form-label-retail">Address</label>
+                  <input type="text" id="set-address" class="form-control form-control-retail" value="Main Bazaar Road, Shop #12">
+                </div>
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <label for="set-phone" class="form-label-retail">Phone Number</label>
+                    <input type="text" id="set-phone" class="form-control form-control-retail" value="+91 98765 43210">
+                  </div>
+                  <div class="col-6">
+                    <label for="set-gst" class="form-label-retail">GST Number (Optional)</label>
+                    <input type="text" id="set-gst" class="form-control form-control-retail" value="27AABCU9603R1ZM">
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-retail btn-primary-retail btn-sm">
+                  <i class="fa-solid fa-floppy-disk me-1"></i> Save Store Profile
+                </button>
+              </form>
+            </div>
+
+            <!-- Billing & Thermal Receipt Settings -->
+            <div class="card-retail p-4 mb-4">
+              <h5 class="fw-bold mb-3" style="color: var(--dark);">
+                <i class="fa-solid fa-print me-2 text-primary"></i>Receipt &amp; POS Setup
+              </h5>
+              <form id="receipt-settings-form" onsubmit="saveReceiptSettings(event)">
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <label for="set-bill-prefix" class="form-label-retail">Bill Prefix</label>
+                    <input type="text" id="set-bill-prefix" class="form-control form-control-retail font-monospace" value="RK">
+                  </div>
+                  <div class="col-6">
+                    <label for="set-printer-width" class="form-label-retail">Thermal Printer Width</label>
+                    <select id="set-printer-width" class="form-select form-select-retail">
+                      <option value="80mm" selected>80mm (Standard Desktop Thermal)</option>
+                      <option value="58mm">58mm (Compact Mobile Bluetooth)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="set-receipt-footer" class="form-label-retail">Receipt Footer Note</label>
+                  <textarea id="set-receipt-footer" class="form-control form-control-retail" rows="2">Thank You! Visit Again&#10;Exchange within 7 days with bill.</textarea>
+                </div>
+
+                <div class="form-check mb-3">
+                  <input class="form-check-input" type="checkbox" id="set-negative-stock">
+                  <label class="form-check-label small" for="set-negative-stock">
+                    Allow billing even if stock is 0 (Negative stock allowed)
+                  </label>
+                </div>
+
+                <button type="submit" class="btn btn-retail btn-primary-retail btn-sm">
+                  <i class="fa-solid fa-floppy-disk me-1"></i> Save Receipt Settings
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Right Column: Cloud Sync & Demo Data -->
+          <div class="col-lg-6">
+            <!-- Firebase Firestore Cloud Synchronization -->
+            <div class="card-retail p-4 mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold m-0" style="color: var(--dark);">
+                  <i class="fa-solid fa-cloud-arrow-up me-2 text-primary"></i>Firebase Cloud Sync
+                </h5>
+                <span id="firebase-status-badge" class="badge bg-light text-success border">Offline Ready</span>
+              </div>
+              <p class="small text-muted mb-3">
+                Sales and inventory are saved in local IndexedDB first. Enter your Firebase web credentials to enable cloud sync across multiple shop devices.
+              </p>
+
+              <form id="firebase-config-form" onsubmit="saveFirebaseCredentials(event)">
+                <div class="mb-2">
+                  <label for="fb-apiKey" class="form-label-retail small">API Key</label>
+                  <input type="text" id="fb-apiKey" class="form-control form-control-sm form-control-retail font-monospace" placeholder="AIzaSy...">
+                </div>
+                <div class="mb-2">
+                  <label for="fb-authDomain" class="form-label-retail small">Auth Domain</label>
+                  <input type="text" id="fb-authDomain" class="form-control form-control-sm form-control-retail font-monospace" placeholder="my-pos.firebaseapp.com">
+                </div>
+                <div class="row g-2 mb-2">
+                  <div class="col-6">
+                    <label for="fb-projectId" class="form-label-retail small">Project ID</label>
+                    <input type="text" id="fb-projectId" class="form-control form-control-sm form-control-retail font-monospace" placeholder="my-pos-id">
+                  </div>
+                  <div class="col-6">
+                    <label for="fb-appId" class="form-label-retail small">App ID</label>
+                    <input type="text" id="fb-appId" class="form-control form-control-sm form-control-retail font-monospace" placeholder="1:12345:web:abcd">
+                  </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                  <button type="button" class="btn btn-sm btn-outline-retail" onclick="triggerManualSync()">
+                    <i class="fa-solid fa-rotate me-1"></i> Sync Now
+                  </button>
+                  <button type="submit" class="btn btn-sm btn-retail btn-primary-retail">
+                    <i class="fa-solid fa-key me-1"></i> Save Firebase Keys
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Demo Data & Maintenance -->
+            <div class="card-retail p-4 mb-4">
+              <h5 class="fw-bold mb-3" style="color: var(--dark);">
+                <i class="fa-solid fa-database me-2 text-primary"></i>Database &amp; Demo Tools
+              </h5>
+              <div class="d-grid gap-2">
+                <button type="button" class="btn btn-outline-retail text-start p-3" onclick="seedDemoCatalog()">
+                  <div class="fw-bold"><i class="fa-solid fa-wand-magic-sparkles text-warning me-2"></i>Load Sample Ladies &amp; Kids Wear Products</div>
+                  <small class="text-muted">Adds sample Kurtis, Frocks, Tops, Jeans with multi-size barcodes and stock.</small>
+                </button>
+                <button type="button" class="btn btn-outline-danger text-start p-3" onclick="clearLocalDatabase()">
+                  <div class="fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Reset Local Database</div>
+                  <small class="text-muted">Clears local IndexedDB products, sales, and cart. (Cannot be undone!)</small>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div id="app-bottom-nav-container"></div>
+  </div>
+
+  <script src="js/lib/bootstrap.bundle.min.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/barcode.js"></script>
+  <script src="js/sales.js"></script>
+  <script src="js/inventory.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Require Admin role for settings
+      const authed = window.authService.requireAuth('ADMIN');
+      if (!authed) return;
+
+      await loadAllSettingsIntoForm();
+    });
+
+    async function loadAllSettingsIntoForm() {
+      const s = await window.settingsService.getAllSettings();
+
+      if (s.storeName) document.getElementById('set-store-name').value = s.storeName;
+      if (s.storeSub) document.getElementById('set-store-sub').value = s.storeSub;
+      if (s.address) document.getElementById('set-address').value = s.address;
+      if (s.phone) document.getElementById('set-phone').value = s.phone;
+      if (s.gstNumber) document.getElementById('set-gst').value = s.gstNumber;
+
+      if (s.billPrefix) document.getElementById('set-bill-prefix').value = s.billPrefix;
+      if (s.printerWidth) document.getElementById('set-printer-width').value = s.printerWidth;
+      if (s.footerMessage) document.getElementById('set-receipt-footer').value = s.footerMessage;
+      if (s.allowNegativeStock !== undefined) document.getElementById('set-negative-stock').checked = !!s.allowNegativeStock;
+
+      // Load Firebase config
+      const fb = window.firebaseService.getSavedConfig();
+      if (fb.isCustom) {
+        document.getElementById('fb-apiKey').value = fb.config.apiKey || '';
+        document.getElementById('fb-authDomain').value = fb.config.authDomain || '';
+        document.getElementById('fb-projectId').value = fb.config.projectId || '';
+        document.getElementById('fb-appId').value = fb.config.appId || '';
+        document.getElementById('firebase-status-badge').textContent = 'Cloud Connected';
+      }
+    }
+
+    async function saveStoreSettings(e) {
+      e.preventDefault();
+      const settings = {
+        storeName: document.getElementById('set-store-name').value.trim(),
+        storeSub: document.getElementById('set-store-sub').value.trim(),
+        address: document.getElementById('set-address').value.trim(),
+        phone: document.getElementById('set-phone').value.trim(),
+        gstNumber: document.getElementById('set-gst').value.trim()
+      };
+      await window.settingsService.saveAllSettings(settings);
+      window.app.showToast('Store profile saved successfully', 'success');
+    }
+
+    async function saveReceiptSettings(e) {
+      e.preventDefault();
+      const settings = {
+        billPrefix: document.getElementById('set-bill-prefix').value.trim(),
+        printerWidth: document.getElementById('set-printer-width').value,
+        footerMessage: document.getElementById('set-receipt-footer').value,
+        allowNegativeStock: document.getElementById('set-negative-stock').checked
+      };
+      await window.settingsService.saveAllSettings(settings);
+      window.app.showToast('Receipt settings saved successfully', 'success');
+    }
+
+    function saveFirebaseCredentials(e) {
+      e.preventDefault();
+      const config = {
+        apiKey: document.getElementById('fb-apiKey').value.trim(),
+        authDomain: document.getElementById('fb-authDomain').value.trim(),
+        projectId: document.getElementById('fb-projectId').value.trim(),
+        appId: document.getElementById('fb-appId').value.trim()
+      };
+
+      if (!config.apiKey || !config.projectId) {
+        window.app.showToast('API Key and Project ID are required.', 'warning');
+        return;
+      }
+
+      window.firebaseService.saveConfig(config);
+      window.app.showToast('Firebase credentials saved. Please refresh the app.', 'success');
+    }
+
+    async function triggerManualSync() {
+      if (window.syncService) {
+        await window.syncService.triggerSync();
+        window.app.showToast('Sync initiated...', 'info');
+      }
+    }
+
+    async function seedDemoCatalog() {
+      if (confirm('Add sample Ladies & Kids wear products to your inventory?')) {
+        const count = await window.settingsService.seedDemoData();
+        window.app.showToast(`Added ${count} demo clothing products!`, 'success');
+      }
+    }
+
+    async function clearLocalDatabase() {
+      const confirmWord = prompt('Type RESET to completely wipe all local sales and products:');
+      if (confirmWord === 'RESET') {
+        indexedDB.deleteDatabase('rk_fashions_db');
+        localStorage.clear();
+        alert('Database cleared. Application will now reload.');
+        window.location.href = 'login.html';
+      }
+    }
+  </script>
+</body>
+</html>

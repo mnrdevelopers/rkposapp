@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — RK FASHIONS</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
+  <meta name="theme-color" content="#74512D">
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/fontawesome.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body style="background: linear-gradient(135deg, #F8F4E1 0%, #EFE7D2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem;">
+
+  <div class="card-retail shadow-lg" style="width: 100%; max-width: 440px; padding: 2.25rem; border-radius: var(--radius-lg); background: #FFFFFF;">
+    <div class="text-center mb-4">
+      <div style="width: 64px; height: 64px; background: var(--dark); border-radius: var(--radius-md); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(78, 31, 0, 0.2);">
+        <i class="fa-solid fa-shirt text-warning fa-2x"></i>
+      </div>
+      <h2 style="font-weight: 900; color: var(--dark); margin: 0; letter-spacing: 0.5px;">RK FASHIONS</h2>
+      <div style="font-size: 0.85rem; font-weight: 700; color: var(--primary); letter-spacing: 1px; margin-top: 4px;">LADIES &amp; KIDS WEAR</div>
+      <p class="text-muted mt-2 small">Retail POS &amp; Inventory Management System</p>
+    </div>
+
+    <!-- Alert Box -->
+    <div id="login-alert" class="alert alert-danger d-none py-2 px-3 small" role="alert"></div>
+
+    <form id="login-form">
+      <div class="mb-3">
+        <label for="login-email" class="form-label-retail">Email Address</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-envelope text-muted"></i></span>
+          <input type="email" id="login-email" class="form-control form-control-retail border-start-0" placeholder="admin@rkfashions.com" required autofocus autocomplete="username">
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="login-password" class="form-label-retail">Password</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
+          <input type="password" id="login-password" class="form-control form-control-retail border-start-0" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="remember-me" checked>
+          <label class="form-check-label small" for="remember-me">Remember session</label>
+        </div>
+        <span class="badge bg-light text-muted border small"><i class="fa-solid fa-shield-halved me-1"></i>Offline Ready</span>
+      </div>
+
+      <button type="submit" id="btn-login" class="btn btn-retail btn-primary-retail w-100 py-2 fs-6">
+        <span id="btn-login-spinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+        <span>LOGIN TO POS</span>
+      </button>
+    </form>
+
+    <!-- Fast Access Credential Helper for Shop Setup -->
+    <div class="mt-4 pt-3 border-top text-center">
+      <div class="small text-muted mb-2 font-monospace" style="font-size: 0.76rem;">Default Shop Roles:</div>
+      <div class="d-flex gap-2 justify-content-center">
+        <button type="button" class="btn btn-sm btn-outline-retail py-1 px-2 small" onclick="fillCreds('admin@rkfashions.com', 'admin123')">
+          <i class="fa-solid fa-user-shield me-1"></i>Admin
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-retail py-1 px-2 small" onclick="fillCreds('cashier@rkfashions.com', 'cashier123')">
+          <i class="fa-solid fa-user me-1"></i>Cashier
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/db.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    function fillCreds(email, password) {
+      document.getElementById('login-email').value = email;
+      document.getElementById('login-password').value = password;
+      document.getElementById('login-alert').classList.add('d-none');
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const alertBox = document.getElementById('login-alert');
+      const btn = document.getElementById('btn-login');
+      const spinner = document.getElementById('btn-login-spinner');
+
+      alertBox.classList.add('d-none');
+      btn.disabled = true;
+      spinner.classList.remove('d-none');
+
+      try {
+        await window.authService.login(email, password);
+        window.location.href = 'sale.html';
+      } catch (err) {
+        alertBox.textContent = err.message || 'Login failed. Please check credentials.';
+        alertBox.classList.remove('d-none');
+      } finally {
+        btn.disabled = false;
+        spinner.classList.add('d-none');
+      }
+    });
+
+    // Auto-redirect if already authenticated
+    window.addEventListener('DOMContentLoaded', async () => {
+      await window.appDB.init();
+      const user = await window.authService.init();
+      if (user) {
+        window.location.href = 'sale.html';
+      }
+    });
+  </script>
+</body>
+</html>

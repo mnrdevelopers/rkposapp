@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RK FASHIONS — POS &amp; Barcode PWA</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
+  <meta name="theme-color" content="#74512D">
+  <script>
+    // Seamless routing
+    const session = localStorage.getItem('rk_auth_session');
+    if (session) {
+      window.location.replace('sale.html');
+    } else {
+      window.location.replace('login.html');
+    }
+  </script>
+</head>
+<body style="background-color: #F8F4E1; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; margin: 0;">
+  <div style="text-align: center;">
+    <h2 style="color: #4E1F00; margin-bottom: 8px;">RK FASHIONS</h2>
+    <p style="color: #74512D;">Loading POS System...</p>
+  </div>
+</body>
+</html>

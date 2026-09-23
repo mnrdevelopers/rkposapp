@@ -162,9 +162,14 @@
               <div class="mt-3 pt-3 border-top">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                   <span class="small fw-bold text-dark">Local Sync Queue</span>
-                  <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none small" onclick="inspectSyncQueue()">
-                    <i class="fa-solid fa-arrows-rotate me-1"></i>Inspect Queue
-                  </button>
+                  <div>
+                    <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none small me-2" onclick="inspectSyncQueue()">
+                      <i class="fa-solid fa-arrows-rotate me-1"></i>Inspect Queue
+                    </button>
+                    <button type="button" class="btn btn-sm btn-link text-danger p-0 text-decoration-none small" onclick="clearSyncQueue()">
+                      <i class="fa-solid fa-trash-can me-1"></i>Clear Queue
+                    </button>
+                  </div>
                 </div>
                 <div id="queue-inspector-box" class="p-2 rounded font-monospace small bg-light border" style="max-height: 120px; overflow-y: auto;">
                   Checking sync queue...
@@ -172,16 +177,12 @@
               </div>
             </div>
 
-            <!-- Demo Data & Maintenance -->
+            <!-- Database Maintenance -->
             <div class="card-retail p-4 mb-4">
               <h5 class="fw-bold mb-3" style="color: var(--dark);">
-                <i class="fa-solid fa-database me-2 text-primary"></i>Database &amp; Demo Tools
+                <i class="fa-solid fa-database me-2 text-primary"></i>Database Maintenance
               </h5>
               <div class="d-grid gap-2">
-                <button type="button" class="btn btn-outline-retail text-start p-3" onclick="seedDemoCatalog()">
-                  <div class="fw-bold"><i class="fa-solid fa-wand-magic-sparkles text-warning me-2"></i>Load Sample Ladies &amp; Kids Wear Products</div>
-                  <small class="text-muted">Adds sample Kurtis, Frocks, Tops, Jeans with multi-size barcodes and stock.</small>
-                </button>
                 <button type="button" class="btn btn-outline-danger text-start p-3" onclick="clearLocalDatabase()">
                   <div class="fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Reset Local Database</div>
                   <small class="text-muted">Clears local IndexedDB products, sales, and cart. (Cannot be undone!)</small>
@@ -334,10 +335,13 @@
       }
     }
 
-    async function seedDemoCatalog() {
-      if (confirm('Add sample Ladies & Kids wear products to your inventory?')) {
-        const count = await window.settingsService.seedDemoData();
-        window.app.showToast(`Added ${count} demo clothing products!`, 'success');
+    async function clearSyncQueue() {
+      if (confirm('Clear all pending items from sync queue? Use this if any outdated or permission-blocked item is stuck.')) {
+        if (window.syncService) {
+          const removed = await window.syncService.clearQueue();
+          window.app.showToast(`Cleared ${removed} queue items.`, 'success');
+          await inspectSyncQueue();
+        }
       }
     }
 

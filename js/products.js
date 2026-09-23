@@ -151,21 +151,77 @@ class ProductService {
     }));
   }
 
-  async archiveProduct(productId) {
+  async deleteProduct(productId) {
     const db = window.appDB;
     const product = await db.get('products', productId);
-    if (product) {
-      product.status = 'ARCHIVED';
-      product.updatedAt = Date.now();
-      await db.update('products', product);
+    if (!product) return false;
 
-      await window.salesService.enqueueSync('ARCHIVE_PRODUCT', 'products', productId, {
-        status: 'ARCHIVED',
-        updatedAt: product.updatedAt
-      });
-      return true;
+    // 1. Purge any pending/obsolete syncQueue items for this product so they don't block the queue
+    try {
+      const queue = await db.getAll('syncQueue');
+      for (const q of queue) {
+        const isTarget = q.docId === productId || 
+          (q.data && (q.data.productId === productId || (q.data.product && q.data.product.id === productId)));
+        if (isTarget && q.action !== 'DELETE_PRODUCT') {
+          await db.delete('syncQueue', q.id);
+        }
+      }
+    } catch (cleanErr) {
+      console.warn('Could not clean old syncQueue items:', cleanErr);
     }
-    return false;
+
+    // 2. Delete all variants belonging to this product from IndexedDB
+    const variants = await db.query('variants', 'productId', productId);
+    for (const v of variants) {
+      await db.delete('variants', v.id);
+    }
+
+    // 3. Delete product record from IndexedDB
+    await db.delete('products', productId);
+
+    // 4. Try DIRECT Cloud Firestore deletion immediately if online
+    let deletedDirectly = false;
+    if (navigator.onLine && window.firebaseService && window.firebaseService.isConfigured) {
+      const firestore = window.firebaseService.getFirestore();
+      if (firestore) {
+        try {
+          const storeId = (window.syncService && window.syncService.storeId) || localStorage.getItem('rk_store_id') || 'rk_store_main';
+          const storeRef = firestore.collection('stores').doc(storeId);
+          const prodRef = storeRef.collection('products').doc(productId);
+
+          // Delete all variants in subcollection
+          const variantsSnapshot = await prodRef.collection('variants').get();
+          const batch = firestore.batch();
+          variantsSnapshot.docs.forEach(vDoc => batch.delete(vDoc.ref));
+          batch.delete(prodRef);
+          await batch.commit();
+          deletedDirectly = true;
+          console.log(`[Firebase] Successfully deleted product ${productId} and its variants directly from Firestore.`);
+        } catch (directErr) {
+          console.warn('[Firebase] Direct delete encountered issue, queueing for background sync:', directErr);
+          if (directErr.code === 'permission-denied') {
+            console.error('[Firebase] Permission denied. Check Firestore security rules in Firebase Console.');
+          }
+        }
+      }
+    }
+
+    // 5. If not deleted directly (e.g. offline or transient error), queue for sync
+    if (!deletedDirectly) {
+      await window.salesService.enqueueSync('DELETE_PRODUCT', 'products', productId, {
+        productId: productId
+      });
+      if (window.syncService) {
+        window.syncService.triggerSync();
+      }
+    }
+
+    return true;
+  }
+
+  // Alias for backward compatibility
+  async archiveProduct(productId) {
+    return this.deleteProduct(productId);
   }
 }
 

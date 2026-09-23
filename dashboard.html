@@ -64,14 +64,11 @@
         <div id="onboarding-banner" class="card-retail p-4 mb-4 text-center d-none" style="border: 2px dashed var(--secondary);">
           <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">👗 👧 🛍️</div>
           <h4 class="fw-bold" style="color: var(--dark);">Welcome to RK FASHIONS 👋</h4>
-          <p class="text-muted">Your store inventory is currently empty. Let's add your first clothing item or load demo products to begin.</p>
+          <p class="text-muted">Your store inventory is currently empty. Click below to add your first product.</p>
           <div class="d-flex justify-content-center gap-2 mt-3">
             <a href="product-form.html" class="btn btn-retail btn-primary-retail">
               <i class="fa-solid fa-plus me-1"></i> Add First Product
             </a>
-            <button type="button" class="btn btn-retail btn-outline-retail" onclick="loadDemoCatalog()">
-              <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Load Sample Demo Inventory
-            </button>
           </div>
         </div>
 
@@ -296,14 +293,6 @@
             </div>
           </div>
         `).join('');
-      }
-    }
-
-    async function loadDemoCatalog() {
-      if (confirm('Load sample ladies and kids wear products?')) {
-        await window.settingsService.seedDemoData();
-        window.app.showToast('Demo products loaded successfully!', 'success');
-        await loadDashboardMetrics();
       }
     }
   </script>

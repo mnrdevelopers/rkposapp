@@ -92,6 +92,23 @@ class SyncService {
       const pending = queue.filter(item => item.status === 'PENDING').sort((a, b) => a.timestamp - b.timestamp);
 
       for (const item of pending) {
+        // Drop obsolete operations for products that no longer exist locally
+        if (item.action === 'SAVE_PRODUCT') {
+          const exists = await db.get('products', item.docId);
+          if (!exists) {
+            console.log(`Dropping obsolete SAVE_PRODUCT for deleted product ${item.docId}`);
+            await db.delete('syncQueue', item.id);
+            continue;
+          }
+        } else if (item.action === 'UPDATE_VARIANT_STOCK') {
+          const variantExists = await db.get('variants', item.docId);
+          if (!variantExists) {
+            console.log(`Dropping obsolete UPDATE_VARIANT_STOCK for deleted variant ${item.docId}`);
+            await db.delete('syncQueue', item.id);
+            continue;
+          }
+        }
+
         try {
           await this.processQueueItem(firestore, item);
           // Mark or remove from queue
@@ -101,7 +118,13 @@ class SyncService {
           item.retryCount = (item.retryCount || 0) + 1;
           item.lastError = itemErr.message;
           await db.update('syncQueue', item);
-          break; // Stop batch on network/auth error to preserve sequence
+
+          // If permission is denied or retried repeatedly, allow following operations (e.g. deletions) to proceed
+          if (itemErr.code === 'permission-denied' || item.retryCount >= 4) {
+            console.error(`Item ${item.id} (${item.action}) encountered permanent/permission error: ${itemErr.message}. Skipping to next.`);
+            continue;
+          }
+          break; // Stop batch on network/auth offline error to preserve sequence
         }
       }
     } catch (err) {
@@ -177,12 +200,31 @@ class SyncService {
         break;
       }
 
+      case 'DELETE_PRODUCT': {
+        const prodRef = storeRef.collection('products').doc(item.docId);
+        // 1. Delete all variants in subcollection
+        const variantsSnapshot = await prodRef.collection('variants').get();
+        const batch = firestore.batch();
+        variantsSnapshot.docs.forEach(vDoc => {
+          batch.delete(vDoc.ref);
+        });
+        // 2. Delete parent product document
+        batch.delete(prodRef);
+        await batch.commit();
+        console.log(`Product ${item.docId} deleted from Cloud Firestore.`);
+        break;
+      }
+
       case 'ARCHIVE_PRODUCT': {
         const prodRef = storeRef.collection('products').doc(item.docId);
-        await prodRef.update({
-          status: 'ARCHIVED',
-          updatedAt: item.data.updatedAt
+        // Also hard delete from Firestore
+        const variantsSnapshot = await prodRef.collection('variants').get();
+        const batch = firestore.batch();
+        variantsSnapshot.docs.forEach(vDoc => {
+          batch.delete(vDoc.ref);
         });
+        batch.delete(prodRef);
+        await batch.commit();
         break;
       }
 
@@ -252,6 +294,21 @@ class SyncService {
       return queue;
     } catch (e) {
       return [];
+    }
+  }
+
+  async clearQueue() {
+    try {
+      const db = window.appDB;
+      const queue = await db.getAll('syncQueue');
+      for (const item of queue) {
+        await db.delete('syncQueue', item.id);
+      }
+      this.notifyListeners();
+      return queue.length;
+    } catch (e) {
+      console.error('Failed to clear sync queue:', e);
+      return 0;
     }
   }
 }

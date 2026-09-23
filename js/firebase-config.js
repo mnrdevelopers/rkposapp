@@ -1,15 +1,17 @@
 /**
- * RK FASHIONS — Firebase & Cloud Firestore Configuration
- * Supports dynamic configuration from settings, safe offline fallback.
+ * RK FASHIONS — Universal Firebase & Cloud Firestore Configuration
+ * Universal credentials for all users and devices, with dynamic CDN loader and offline fallback.
  */
 
-const DEFAULT_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyYOUR_API_KEY_HERE",
-  authDomain: "rk-fashions-pos.firebaseapp.com",
-  projectId: "rk-fashions-pos",
-  storageBucket: "rk-fashions-pos.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:abcdef123456"
+// Universal Firebase Project Configuration (Active across all devices and users)
+const UNIVERSAL_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB8qW8Ta3KjJWVaUC8PNrK_uVPYrpWic9Y",
+  authDomain: "rkposapp.firebaseapp.com",
+  projectId: "rkposapp",
+  storageBucket: "rkposapp.firebasestorage.app",
+  messagingSenderId: "903410042245",
+  appId: "1:903410042245:web:67e37ff6d207a0d78570ec",
+  measurementId: "G-KCJ1VH8C47"
 };
 
 class FirebaseService {
@@ -18,48 +20,102 @@ class FirebaseService {
     this.auth = null;
     this.firestore = null;
     this.isInitialized = false;
-    this.isConfigured = false;
     this.storeId = 'rk_fashions_main';
+    this.config = this.getUniversalConfig();
+    this.isConfigured = !!(this.config.apiKey && !this.config.apiKey.includes('YOUR_API_KEY'));
   }
 
-  getSavedConfig() {
+  /**
+   * Retrieves the universal configuration.
+   * Checks localStorage only if a local device override was explicitly set;
+   * otherwise defaults universally to UNIVERSAL_FIREBASE_CONFIG.
+   */
+  getUniversalConfig() {
     try {
       const saved = localStorage.getItem('rk_firebase_config');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.apiKey && !parsed.apiKey.includes('YOUR_API_KEY')) {
-          return { config: parsed, isCustom: true };
+          return parsed;
         }
       }
     } catch (e) {
       console.warn('Could not read saved firebase config', e);
     }
-    return { config: DEFAULT_FIREBASE_CONFIG, isCustom: false };
+    return UNIVERSAL_FIREBASE_CONFIG;
+  }
+
+  getSavedConfig() {
+    return {
+      config: this.config,
+      isCustom: this.isConfigured
+    };
   }
 
   saveConfig(newConfig) {
-    localStorage.setItem('rk_firebase_config', JSON.stringify(newConfig));
+    this.config = { ...this.config, ...newConfig };
+    localStorage.setItem('rk_firebase_config', JSON.stringify(this.config));
     this.isConfigured = true;
   }
 
-  async init() {
-    const { config, isCustom } = this.getSavedConfig();
-    this.isConfigured = isCustom;
+  /**
+   * Dynamically loads Firebase SDK from official Google CDN if not already present.
+   */
+  async loadFirebaseScripts() {
+    if (window.firebase) return true;
+    if (!navigator.onLine) return false;
 
-    // Load Firebase Modular/Compat dynamically from CDN if online
+    return new Promise((resolve) => {
+      const loadScript = (src) => {
+        return new Promise((res, rej) => {
+          // Check if already in DOM
+          if (document.querySelector(`script[src="${src}"]`)) {
+            return res();
+          }
+          const s = document.createElement('script');
+          s.src = src;
+          s.async = false;
+          s.onload = res;
+          s.onerror = rej;
+          document.head.appendChild(s);
+        });
+      };
+
+      loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js')
+        .then(() => Promise.all([
+          loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js'),
+          loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js')
+        ]))
+        .then(() => resolve(true))
+        .catch((err) => {
+          console.warn('Firebase CDN scripts could not be loaded (offline fallback active):', err);
+          resolve(false);
+        });
+    });
+  }
+
+  async init() {
+    this.config = this.getUniversalConfig();
+    this.isConfigured = !!(this.config.apiKey && !this.config.apiKey.includes('YOUR_API_KEY'));
+
+    // Dynamically load Firebase SDK if online
+    if (!window.firebase && navigator.onLine) {
+      await this.loadFirebaseScripts();
+    }
+
     if (window.firebase) {
       try {
         if (!firebase.apps.length) {
-          this.app = firebase.initializeApp(config);
+          this.app = firebase.initializeApp(this.config);
         } else {
           this.app = firebase.app();
         }
         this.auth = firebase.auth();
         this.firestore = firebase.firestore();
         this.isInitialized = true;
-        console.log('Firebase initialized successfully. Configured status:', this.isConfigured);
+        console.log('Universal Firebase initialized successfully for project:', this.config.projectId);
       } catch (err) {
-        console.warn('Firebase init encountered warning (running in offline-ready mode):', err.message);
+        console.warn('Firebase init warning (running in offline-ready mode):', err.message);
       }
     }
     return this;

@@ -1,61 +1,12 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    function isStoreMember(storeId) {
-      return isAuthenticated();
-      // Multi-store expansion:
-      // return isAuthenticated() && request.auth.token.storeId == storeId;
-    }
-
-    function isAdmin() {
-      return isAuthenticated() && (
-        request.auth.token.admin == true ||
-        request.auth.token.email.matches('.*admin.*') ||
-        request.auth.token.email == 'admin@rkfashions.com'
-      );
-    }
-
-    // Stores structure
+    // RK FASHIONS POS - Store data rules
+    // Allows your POS terminals to read and sync products, inventory, and sales
     match /stores/{storeId} {
-      allow read: if isStoreMember(storeId);
-      allow write: if isAdmin();
-
-      // Products & Variation subcollections
-      match /products/{productId} {
-        allow read: if isStoreMember(storeId);
-        allow create, update: if isStoreMember(storeId);
-        allow delete: if isAdmin();
-
-        match /variants/{variantId} {
-          allow read: if isStoreMember(storeId);
-          allow write: if isStoreMember(storeId);
-        }
-      }
-
-      // Sales & Items subcollections
-      match /sales/{saleId} {
-        allow read: if isStoreMember(storeId);
-        allow create: if isStoreMember(storeId);
-        allow update: if isStoreMember(storeId); // For cancellation or sync status
-        allow delete: if false; // Immutable sales audit trail
-
-        match /items/{itemId} {
-          allow read: if isStoreMember(storeId);
-          allow create: if isStoreMember(storeId);
-          allow write: if false; // Line items are permanent
-        }
-      }
-
-      // Settings
-      match /settings/{settingId} {
-        allow read: if isStoreMember(storeId);
-        allow write: if isAdmin();
+      allow read, write: if true;
+      match /{allChildren=**} {
+        allow read, write: if true;
       }
     }
   }

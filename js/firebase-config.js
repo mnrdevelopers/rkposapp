@@ -4,12 +4,13 @@
  */
 
 const DEFAULT_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyYOUR_API_KEY_HERE",
-  authDomain: "rk-fashions-pos.firebaseapp.com",
-  projectId: "rk-fashions-pos",
-  storageBucket: "rk-fashions-pos.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:abcdef123456"
+  apiKey: "AIzaSyB8qW8Ta3KjJWVaUC8PNrK_uVPYrpWic9Y",
+  authDomain: "rkposapp.firebaseapp.com",
+  projectId: "rkposapp",
+  storageBucket: "rkposapp.firebasestorage.app",
+  messagingSenderId: "903410042245",
+  appId: "1:903410042245:web:67e37ff6d207a0d78570ec",
+  measurementId: "G-KCJ1VH8C47"
 };
 
 class FirebaseService {

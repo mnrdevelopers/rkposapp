@@ -62,13 +62,19 @@ class AppController {
     const sidebarContainer = document.getElementById('app-sidebar-container');
     if (sidebarContainer) {
       sidebarContainer.innerHTML = `
+        <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="window.app.toggleMobileSidebar(false)"></div>
         <div class="sidebar">
-          <div class="sidebar-brand">
-            <div class="brand-logo-fallback"><i class="fa-solid fa-shirt"></i></div>
-            <div class="brand-text">
-              <h1 class="brand-title">RK FASHIONS</h1>
-              <div class="brand-subtitle">LADIES &amp; KIDS WEAR</div>
+          <div class="sidebar-brand d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+              <div class="brand-logo-fallback"><i class="fa-solid fa-shirt"></i></div>
+              <div class="brand-text">
+                <h1 class="brand-title">RK FASHIONS</h1>
+                <div class="brand-subtitle">LADIES &amp; KIDS WEAR</div>
+              </div>
             </div>
+            <button type="button" class="btn btn-sm btn-outline-light border-0 sidebar-close-btn p-1" onclick="window.app.toggleMobileSidebar(false)" aria-label="Close menu">
+              <i class="fa-solid fa-xmark fa-xl"></i>
+            </button>
           </div>
 
           <ul class="sidebar-nav">
@@ -126,6 +132,11 @@ class AppController {
           </div>
         </div>
       `;
+
+      // Auto close on mobile when link is clicked
+      document.querySelectorAll('.sidebar-nav-link').forEach(link => {
+        link.addEventListener('click', () => this.toggleMobileSidebar(false));
+      });
     }
 
     // Render Mobile Bottom Navigation
@@ -157,8 +168,52 @@ class AppController {
       `;
     }
 
+    // Inject hamburger menu button on mobile
+    this.injectHamburgerButton();
+
     // Inject global header logout button if top-header is present
     this.injectHeaderControls();
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.toggleMobileSidebar(false);
+      }
+    });
+  }
+
+  injectHamburgerButton() {
+    const headerLeft = document.querySelector('.header-left');
+    if (headerLeft && !document.getElementById('mobile-hamburger-btn')) {
+      const btn = document.createElement('button');
+      btn.id = 'mobile-hamburger-btn';
+      btn.type = 'button';
+      btn.className = 'btn btn-sm btn-retail btn-outline-retail me-2 d-lg-none d-inline-flex align-items-center justify-content-center';
+      btn.title = 'Open Menu';
+      btn.setAttribute('aria-label', 'Open Navigation Menu');
+      btn.style.width = '36px';
+      btn.style.height = '36px';
+      btn.style.padding = '0';
+      btn.innerHTML = '<i class="fa-solid fa-bars fa-lg"></i>';
+      btn.onclick = () => this.toggleMobileSidebar(true);
+      headerLeft.prepend(btn);
+    }
+  }
+
+  toggleMobileSidebar(open) {
+    const sidebar = document.querySelector('.sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (sidebar) {
+      if (open) {
+        sidebar.classList.add('mobile-open');
+        if (backdrop) backdrop.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      } else {
+        sidebar.classList.remove('mobile-open');
+        if (backdrop) backdrop.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    }
   }
 
   injectHeaderControls() {

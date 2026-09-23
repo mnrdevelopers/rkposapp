@@ -97,18 +97,16 @@ class AppController {
                 <i class="fa-solid fa-clock-rotate-left"></i> Sales History
               </a>
             </li>
-            ${isAdmin ? `
-              <li class="sidebar-nav-item admin-only">
-                <a href="reports.html" class="sidebar-nav-link ${this.currentPage === 'reports.html' ? 'active' : ''}">
-                  <i class="fa-solid fa-chart-line"></i> Reports
-                </a>
-              </li>
-              <li class="sidebar-nav-item admin-only">
-                <a href="settings.html" class="sidebar-nav-link ${this.currentPage === 'settings.html' ? 'active' : ''}">
-                  <i class="fa-solid fa-gear"></i> Settings
-                </a>
-              </li>
-            ` : ''}
+            <li class="sidebar-nav-item">
+              <a href="reports.html" class="sidebar-nav-link ${this.currentPage === 'reports.html' ? 'active' : ''}">
+                <i class="fa-solid fa-chart-line"></i> Reports
+              </a>
+            </li>
+            <li class="sidebar-nav-item">
+              <a href="settings.html" class="sidebar-nav-link ${this.currentPage === 'settings.html' ? 'active' : ''}">
+                <i class="fa-solid fa-gear"></i> Settings
+              </a>
+            </li>
           </ul>
 
           <div class="sidebar-footer">
@@ -116,8 +114,8 @@ class AppController {
               <div class="d-flex align-items-center gap-2 text-white">
                 <i class="fa-solid fa-circle-user fa-lg text-warning"></i>
                 <div style="line-height: 1.1;">
-                  <div style="font-size: 0.85rem; font-weight: 700;">${user ? user.displayName : 'Staff'}</div>
-                  <div style="font-size: 0.7rem; color: #FEBA17;">${user ? user.role : 'CASHIER'}</div>
+                  <div style="font-size: 0.85rem; font-weight: 700;">${user ? user.displayName : 'Store Admin'}</div>
+                  <div style="font-size: 0.7rem; color: #FEBA17;">${user ? user.role : 'ADMIN'}</div>
                 </div>
               </div>
               <button class="btn btn-sm btn-outline-light border-0" title="Logout" onclick="window.authService.logout()">
@@ -146,13 +144,13 @@ class AppController {
             <i class="fa-solid fa-barcode"></i>
             <span>Tags</span>
           </a>
-          <a href="sales-history.html" class="bottom-nav-item ${this.currentPage === 'sales-history.html' ? 'active' : ''}">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-            <span>Orders</span>
+          <a href="reports.html" class="bottom-nav-item ${this.currentPage === 'reports.html' ? 'active' : ''}">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Reports</span>
           </a>
-          <a href="dashboard.html" class="bottom-nav-item ${this.currentPage === 'dashboard.html' ? 'active' : ''}">
-            <i class="fa-solid fa-chart-pie"></i>
-            <span>Dashboard</span>
+          <a href="settings.html" class="bottom-nav-item ${this.currentPage === 'settings.html' ? 'active' : ''}">
+            <i class="fa-solid fa-gear"></i>
+            <span>Settings</span>
           </a>
         </nav>
       `;

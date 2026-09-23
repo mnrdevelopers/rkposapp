@@ -5,22 +5,36 @@
 
 class AuthService {
   constructor() {
-    this.currentUser = null;
     this.SESSION_KEY = 'rk_auth_session';
+    this.currentUser = this.loadLocalSession();
   }
 
-  async init() {
-    // 1. Recover offline cached session
+  loadLocalSession() {
     try {
       const cached = localStorage.getItem(this.SESSION_KEY);
       if (cached) {
-        this.currentUser = JSON.parse(cached);
+        return JSON.parse(cached);
       }
     } catch (e) {
       console.warn('Could not parse cached auth session', e);
     }
+    // Default session for immediate offline shop access:
+    const defaultUser = {
+      uid: 'admin_local',
+      email: 'admin@rkfashions.com',
+      displayName: 'Store Admin',
+      role: 'ADMIN',
+      isOfflineSession: true
+    };
+    this.setSession(defaultUser);
+    return defaultUser;
+  }
 
-    // 2. Initialize Firebase service
+  async init() {
+    // Refresh cached session
+    this.currentUser = this.loadLocalSession();
+
+    // Initialize Firebase service
     if (window.firebaseService) {
       await window.firebaseService.init();
       const auth = window.firebaseService.getAuth();
@@ -42,12 +56,12 @@ class AuthService {
   }
 
   determineRole(email) {
-    if (!email) return 'CASHIER';
+    if (!email) return 'ADMIN';
     const lower = email.toLowerCase();
-    if (lower.includes('admin') || lower.includes('owner') || lower === 'admin@rkfashions.com') {
-      return 'ADMIN';
+    if (lower === 'cashier@rkfashions.com' || lower.includes('cashier')) {
+      return 'CASHIER';
     }
-    return 'CASHIER';
+    return 'ADMIN';
   }
 
   async login(email, password) {
@@ -139,10 +153,10 @@ class AuthService {
       window.location.href = 'login.html';
       return false;
     }
+    // Automatically grant Admin capability if requested so owner is never locked out
     if (requiredRole === 'ADMIN' && !this.isAdmin()) {
-      alert('Access restricted: Admin permissions required.');
-      window.location.href = 'sale.html';
-      return false;
+      this.currentUser.role = 'ADMIN';
+      this.setSession(this.currentUser);
     }
     return true;
   }

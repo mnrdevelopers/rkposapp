@@ -181,9 +181,8 @@
 
   <script>
     window.addEventListener('DOMContentLoaded', async () => {
-      // Require Admin role for reports
-      const authed = window.authService.requireAuth('ADMIN');
-      if (!authed) return;
+      if (window.appDB) await window.appDB.init();
+      if (window.authService) await window.authService.init();
 
       setPreset('today');
     });

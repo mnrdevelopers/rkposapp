@@ -43,9 +43,15 @@
               <h3 class="fw-bold mb-1" id="greeting-text">Good Afternoon 👋</h3>
               <p class="mb-0 opacity-75 small">Here is your live retail sales and inventory status today.</p>
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 flex-wrap">
               <a href="sale.html" class="btn btn-retail btn-secondary-retail">
                 <i class="fa-solid fa-cash-register me-1"></i> Start Billing
+              </a>
+              <a href="reports.html" class="btn btn-retail btn-outline-light">
+                <i class="fa-solid fa-chart-line me-1"></i> Reports
+              </a>
+              <a href="settings.html" class="btn btn-retail btn-outline-light">
+                <i class="fa-solid fa-gear me-1"></i> Settings
               </a>
               <a href="product-form.html" class="btn btn-retail btn-outline-light">
                 <i class="fa-solid fa-plus me-1"></i> Add Product
@@ -212,6 +218,9 @@
 
   <script>
     window.addEventListener('DOMContentLoaded', async () => {
+      if (window.appDB) await window.appDB.init();
+      if (window.authService) await window.authService.init();
+
       setGreeting();
       await loadDashboardMetrics();
     });

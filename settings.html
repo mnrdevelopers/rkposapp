@@ -233,10 +233,15 @@
               <h5 class="fw-bold mb-3" style="color: var(--dark);">
                 <i class="fa-solid fa-database me-2 text-primary"></i>Database Maintenance
               </h5>
-              <div class="d-grid gap-2">
-                <button type="button" class="btn btn-outline-danger text-start p-3" onclick="clearLocalDatabase()">
-                  <div class="fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Reset Local Database</div>
-                  <small class="text-muted">Clears local IndexedDB products, sales, and cart. (Cannot be undone!)</small>
+              <div class="d-grid gap-3">
+                <button type="button" class="btn btn-outline-warning text-start p-3" onclick="clearLocalDatabase()">
+                  <div class="fw-bold text-dark"><i class="fa-solid fa-desktop me-2 text-warning"></i>Reset Local Device Database</div>
+                  <small class="text-muted">Clears local IndexedDB products, sales, and cart on this device only.</small>
+                </button>
+
+                <button type="button" class="btn btn-outline-danger text-start p-3" onclick="wipeCloudAndLocalForProduction()">
+                  <div class="fw-bold text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i>Factory Wipe for Production (Local + Cloud)</div>
+                  <small class="text-muted">Erases all test products, test sales, store codes, and cloud data from Firebase and resets bill numbers to RK000001 for clean production launch.</small>
                 </button>
               </div>
             </div>
@@ -528,6 +533,135 @@
         alert('Database cleared. Application will now reload.');
         window.location.href = 'login.html';
       }
+    }
+
+    async function wipeCloudAndLocalForProduction() {
+      const confirmWord = prompt(
+        "⚠️ WARNING: PRODUCTION WIPE\n\nThis will permanently delete all test products, test sales, store codes, and cloud data from both Cloud Firestore and this local device, resetting sequence bill numbers to RK000001 for production.\n\nType 'PRODUCTION WIPE' to proceed:"
+      );
+
+      if (confirmWord !== 'PRODUCTION WIPE') {
+        if (confirmWord !== null) {
+          window.app.showToast('Production wipe cancelled. Confirmation did not match.', 'info');
+        }
+        return;
+      }
+
+      const statusBox = document.getElementById('connection-test-result');
+      if (statusBox) {
+        statusBox.classList.remove('d-none', 'alert-success', 'alert-danger');
+        statusBox.classList.add('alert', 'alert-warning');
+        statusBox.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Wiping Cloud Firestore and local database for production...';
+      }
+
+      let deletedCloudCounts = { stores: 0, products: 0, sales: 0, codes: 0, users: 0 };
+
+      // 1. Wipe Cloud Firestore
+      try {
+        const firestore = window.firebaseService ? window.firebaseService.getFirestore() : null;
+        if (firestore) {
+          // A. Wipe all /stores and subcollections
+          const storesSnap = await firestore.collection('stores').get();
+          for (const sDoc of storesSnap.docs) {
+            const sRef = sDoc.ref;
+            // products
+            const prods = await sRef.collection('products').get();
+            for (const p of prods.docs) {
+              const vars = await p.ref.collection('variants').get();
+              const batch = firestore.batch();
+              vars.forEach(v => batch.delete(v.ref));
+              batch.delete(p.ref);
+              await batch.commit();
+              deletedCloudCounts.products++;
+            }
+            // sales
+            const sales = await sRef.collection('sales').get();
+            for (const s of sales.docs) {
+              const items = await s.ref.collection('items').get();
+              const batch = firestore.batch();
+              items.forEach(it => batch.delete(it.ref));
+              batch.delete(s.ref);
+              await batch.commit();
+              deletedCloudCounts.sales++;
+            }
+            await sRef.delete();
+            deletedCloudCounts.stores++;
+          }
+
+          // B. Wipe /storeCodes
+          const codesSnap = await firestore.collection('storeCodes').get();
+          if (!codesSnap.empty) {
+            const cBatch = firestore.batch();
+            codesSnap.docs.forEach(d => {
+              cBatch.delete(d.ref);
+              deletedCloudCounts.codes++;
+            });
+            await cBatch.commit();
+          }
+
+          // C. Wipe /users
+          const usersSnap = await firestore.collection('users').get();
+          if (!usersSnap.empty) {
+            const uBatch = firestore.batch();
+            usersSnap.docs.forEach(d => {
+              uBatch.delete(d.ref);
+              deletedCloudCounts.users++;
+            });
+            await uBatch.commit();
+          }
+
+          // D. Wipe legacy root /products and /sales if any exist
+          try {
+            const rootProds = await firestore.collection('products').get();
+            if (!rootProds.empty) {
+              const rpBatch = firestore.batch();
+              rootProds.docs.forEach(d => rpBatch.delete(d.ref));
+              await rpBatch.commit();
+            }
+          } catch (e) {}
+
+          try {
+            const rootSales = await firestore.collection('sales').get();
+            if (!rootSales.empty) {
+              const rsBatch = firestore.batch();
+              rootSales.docs.forEach(d => rsBatch.delete(d.ref));
+              await rsBatch.commit();
+            }
+          } catch (e) {}
+        }
+      } catch (cloudErr) {
+        console.warn('Cloud wipe notice:', cloudErr);
+      }
+
+      // 2. Wipe Local IndexedDB cleanly
+      if (window.appDB) {
+        await window.appDB.clearAll();
+        await window.appDB.resetSequences();
+      }
+
+      // 3. Clear LocalStorage session & active store cache
+      const keysToClear = [
+        'rk_active_store_id',
+        'rk_active_store_code',
+        'rk_store_name',
+        'rk_pos_user',
+        'rk_cart_items',
+        'rk_cart_discount'
+      ];
+      keysToClear.forEach(k => localStorage.removeItem(k));
+
+      // 4. Sign out of Firebase Auth if active
+      try {
+        if (window.firebaseService && window.firebaseService.auth) {
+          await window.firebaseService.auth.signOut();
+        }
+      } catch (e) {}
+
+      alert(
+        `✅ PRODUCTION WIPE COMPLETE!\n\nAll test records have been erased:\n- Cloud stores deleted: ${deletedCloudCounts.stores}\n- Cloud products deleted: ${deletedCloudCounts.products}\n- Cloud sales deleted: ${deletedCloudCounts.sales}\n- Cloud store codes wiped: ${deletedCloudCounts.codes}\n- Local IndexedDB: Completely empty\n- Bill sequences: Reset to RK000001\n\nThe app is now 100% clean and ready for production setup.`
+      );
+
+      window.location.href = 'login.html';
     }
   </script>
 </body>

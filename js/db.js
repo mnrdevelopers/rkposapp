@@ -196,6 +196,43 @@ class AppDatabase {
       getReq.onerror = () => reject(getReq.error);
     });
   }
+
+  /**
+   * Clears all object stores in IndexedDB (resets database to blank slate).
+   */
+  async clearAll() {
+    const storeNames = ['products', 'variants', 'sales', 'saleItems', 'syncQueue', 'sequences', 'settings', 'users'];
+    for (const name of storeNames) {
+      try {
+        const tx = await this.getTransaction(name, 'readwrite');
+        const store = tx.objectStore(name);
+        await new Promise((resolve, reject) => {
+          const req = store.clear();
+          req.onsuccess = () => resolve();
+          req.onerror = () => reject(req.error);
+        });
+      } catch (e) {
+        console.warn(`Could not clear store ${name}:`, e);
+      }
+    }
+  }
+
+  /**
+   * Resets atomic sequence counters (e.g. restarts bill numbers at 0).
+   */
+  async resetSequences() {
+    try {
+      const tx = await this.getTransaction('sequences', 'readwrite');
+      const store = tx.objectStore('sequences');
+      await new Promise((resolve, reject) => {
+        const req = store.clear();
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    } catch (e) {
+      console.warn('Could not reset sequences:', e);
+    }
+  }
 }
 
 // Export singleton instance

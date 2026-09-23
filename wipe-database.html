@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Production Database Wipe — RK FASHIONS</title>
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/fontawesome.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      background-color: #f8f9fa;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .wipe-card {
+      max-width: 620px;
+      width: 100%;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      border: 1px solid #dee2e6;
+    }
+    .log-box {
+      background-color: #1e1e1e;
+      color: #00ff66;
+      font-family: monospace;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      height: 220px;
+      overflow-y: auto;
+      padding: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wipe-card p-4">
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; font-size: 1.5rem;">
+        <i class="fa-solid fa-trash-can"></i>
+      </div>
+      <div>
+        <h4 class="fw-bold mb-0 text-dark">Production Database Wipe</h4>
+        <small class="text-muted">Prepare RK FASHIONS POS for Clean Production Launch</small>
+      </div>
+    </div>
+
+    <div class="alert alert-warning py-2 px-3 small mb-3">
+      <i class="fa-solid fa-triangle-exclamation me-1 text-danger"></i>
+      <strong>Caution:</strong> This tool will permanently erase all test products, test variants, test sales, store codes, and reset bill numbers back to <code>RK000001</code> across both <strong>Cloud Firestore</strong> and <strong>Local IndexedDB</strong>.
+    </div>
+
+    <div class="mb-3">
+      <label for="wipe-confirm-input" class="form-label small fw-bold">Type <code>WIPE ALL DATA</code> to enable the button:</label>
+      <input type="text" id="wipe-confirm-input" class="form-control form-control-sm font-monospace" placeholder="WIPE ALL DATA" oninput="checkConfirmation()">
+    </div>
+
+    <div class="d-flex gap-2 mb-3">
+      <button type="button" id="btn-run-wipe" class="btn btn-danger btn-sm px-4 fw-bold" disabled onclick="executeWipe()">
+        <i class="fa-solid fa-bomb me-1"></i> Erase All Database Records
+      </button>
+      <a href="login.html" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to Login
+      </a>
+    </div>
+
+    <div class="mb-2 d-flex justify-content-between align-items-center">
+      <span class="small fw-bold text-muted">Execution Log:</span>
+      <span id="wipe-status-badge" class="badge bg-secondary">Idle</span>
+    </div>
+    <div id="log-console" class="log-box">Ready. Click 'Erase All Database Records' when confirmed.</div>
+  </div>
+
+  <script src="js/lib/bootstrap.bundle.min.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/store.js"></script>
+
+  <script>
+    function checkConfirmation() {
+      const val = document.getElementById('wipe-confirm-input').value.trim();
+      const btn = document.getElementById('btn-run-wipe');
+      btn.disabled = (val !== 'WIPE ALL DATA');
+    }
+
+    function log(msg, type = 'info') {
+      const consoleEl = document.getElementById('log-console');
+      const time = new Date().toLocaleTimeString();
+      const color = type === 'error' ? '#ff5555' : (type === 'success' ? '#55ff55' : '#00ff66');
+      consoleEl.innerHTML += `<div style="color: ${color}">[${time}] ${msg}</div>`;
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    async function executeWipe() {
+      const btn = document.getElementById('btn-run-wipe');
+      const input = document.getElementById('wipe-confirm-input');
+      const badge = document.getElementById('wipe-status-badge');
+
+      btn.disabled = true;
+      input.disabled = true;
+      badge.className = 'badge bg-warning text-dark';
+      badge.textContent = 'Wiping...';
+
+      log('Starting full production database wipe...', 'info');
+
+      // 1. Initialize DBs
+      if (window.appDB) await window.appDB.init();
+
+      // 2. Cloud Firestore Wipe
+      try {
+        const firestore = window.firebaseService ? window.firebaseService.getFirestore() : null;
+        if (firestore) {
+          log('Connected to Cloud Firestore (rkposapp)...', 'info');
+
+          // A. /stores
+          log('Querying /stores collection...', 'info');
+          const storesSnap = await firestore.collection('stores').get();
+          log(`Found ${storesSnap.size} store(s) in Cloud Firestore.`, 'info');
+
+          for (const sDoc of storesSnap.docs) {
+            const sRef = sDoc.ref;
+            log(`Wiping store: ${sDoc.id}...`, 'info');
+
+            // Products & variants subcollections
+            const prods = await sRef.collection('products').get();
+            for (const p of prods.docs) {
+              const vars = await p.ref.collection('variants').get();
+              const batch = firestore.batch();
+              vars.forEach(v => batch.delete(v.ref));
+              batch.delete(p.ref);
+              await batch.commit();
+            }
+            log(`  Deleted ${prods.size} product(s) from store ${sDoc.id}.`, 'info');
+
+            // Sales & items subcollections
+            const sales = await sRef.collection('sales').get();
+            for (const s of sales.docs) {
+              const items = await s.ref.collection('items').get();
+              const batch = firestore.batch();
+              items.forEach(it => batch.delete(it.ref));
+              batch.delete(s.ref);
+              await batch.commit();
+            }
+            log(`  Deleted ${sales.size} sale(s) from store ${sDoc.id}.`, 'info');
+
+            await sRef.delete();
+            log(`  Store ${sDoc.id} deleted.`, 'success');
+          }
+
+          // B. /storeCodes
+          log('Wiping /storeCodes directory...', 'info');
+          const codesSnap = await firestore.collection('storeCodes').get();
+          if (!codesSnap.empty) {
+            const cBatch = firestore.batch();
+            codesSnap.docs.forEach(d => cBatch.delete(d.ref));
+            await cBatch.commit();
+            log(`Deleted ${codesSnap.size} store code(s).`, 'success');
+          }
+
+          // C. /users
+          log('Wiping /users directory...', 'info');
+          const usersSnap = await firestore.collection('users').get();
+          if (!usersSnap.empty) {
+            const uBatch = firestore.batch();
+            usersSnap.docs.forEach(d => uBatch.delete(d.ref));
+            await uBatch.commit();
+            log(`Deleted ${usersSnap.size} user profile(s).`, 'success');
+          }
+
+          // D. Legacy root /products and /sales
+          try {
+            const rootProds = await firestore.collection('products').get();
+            if (!rootProds.empty) {
+              const rpBatch = firestore.batch();
+              rootProds.docs.forEach(d => rpBatch.delete(d.ref));
+              await rpBatch.commit();
+              log(`Deleted ${rootProds.size} legacy root products.`, 'info');
+            }
+          } catch(e) {}
+
+          try {
+            const rootSales = await firestore.collection('sales').get();
+            if (!rootSales.empty) {
+              const rsBatch = firestore.batch();
+              rootSales.docs.forEach(d => rsBatch.delete(d.ref));
+              await rsBatch.commit();
+              log(`Deleted ${rootSales.size} legacy root sales.`, 'info');
+            }
+          } catch(e) {}
+
+          log('Cloud Firestore wipe completed successfully.', 'success');
+        } else {
+          log('Cloud Firestore is offline or not configured. Skipping cloud step.', 'info');
+        }
+      } catch (err) {
+        log(`Cloud Firestore wipe notice: ${err.message}`, 'error');
+      }
+
+      // 3. Wipe Local IndexedDB
+      try {
+        log('Wiping Local IndexedDB (rk_fashions_db)...', 'info');
+        if (window.appDB) {
+          await window.appDB.clearAll();
+          await window.appDB.resetSequences();
+          log('Local products, sales, sync queue, and bill sequences reset to RK000001.', 'success');
+        }
+      } catch (err) {
+        log(`Local DB error: ${err.message}`, 'error');
+      }
+
+      // 4. Clear LocalStorage keys
+      log('Clearing local session & active store tokens...', 'info');
+      const keysToClear = [
+        'rk_active_store_id',
+        'rk_active_store_code',
+        'rk_store_name',
+        'rk_pos_user',
+        'rk_cart_items',
+        'rk_cart_discount'
+      ];
+      keysToClear.forEach(k => localStorage.removeItem(k));
+
+      // 5. Sign out Firebase Auth
+      try {
+        if (window.firebaseService && window.firebaseService.auth) {
+          await window.firebaseService.auth.signOut();
+        }
+      } catch(e) {}
+
+      badge.className = 'badge bg-success';
+      badge.textContent = 'Complete';
+      log('=================================================', 'success');
+      log('PRODUCTION WIPE SUCCESSFUL!', 'success');
+      log('All databases are blank and ready for production.', 'success');
+      log('Redirecting to clean registration in 3 seconds...', 'info');
+
+      setTimeout(() => {
+        window.location.href = 'login.html';
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

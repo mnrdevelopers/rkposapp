@@ -17,6 +17,7 @@ const PRECACHE_ASSETS = [
   './sales-history.html',
   './reports.html',
   './settings.html',
+  './wipe-database.html',
   './manifest.json',
   './css/bootstrap.min.css',
   './css/fontawesome.min.css',

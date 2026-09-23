@@ -112,6 +112,13 @@ class FirebaseService {
         }
         this.auth = firebase.auth();
         this.firestore = firebase.firestore();
+        try {
+          this.firestore.settings({
+            experimentalForceLongPolling: true
+          });
+        } catch (settingsErr) {
+          // settings can only be called before any other operations
+        }
         this.isInitialized = true;
         console.log('Universal Firebase initialized successfully for project:', this.config.projectId);
       } catch (err) {

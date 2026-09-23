@@ -56,11 +56,11 @@ A fast, mobile-responsive, production-ready, offline-first Progressive Web App (
    python -m http.server 8000
    ```
 2. Navigate to `http://localhost:8000/login.html` (or open directly).
-3. **Default Shop Login Credentials**:
-   - **Admin**: `admin@rkfashions.com` | Password: `admin123`
-   - **Cashier**: `cashier@rkfashions.com` | Password: `cashier123`
-4. On the Dashboard, click **"Load Sample Demo Inventory"** to immediately populate realistic Ladies & Kids wear products (Kurtis, Frocks, Tops, Jeans, Leggings) with pre-generated barcodes and stock.
-5. Go to **New Sale / POS** (`sale.html`) and begin scanning!
+3. **Authentication**:
+   - **Google Sign-In**: Click "Sign in with Google" for instant one-click login.
+   - **Register New Account**: Click the "Register" tab to create your own store admin account with your custom email and password.
+   - **Sign In**: Enter your registered email and password.
+4. Go to **New Sale / POS** (`sale.html`) and begin billing!
 
 ---
 

@@ -118,8 +118,9 @@ class AppController {
                   <div style="font-size: 0.7rem; color: #FEBA17;">${user ? user.role : 'ADMIN'}</div>
                 </div>
               </div>
-              <button class="btn btn-sm btn-outline-light border-0" title="Logout" onclick="window.authService.logout()">
+              <button class="btn btn-sm btn-outline-light border-0 d-flex align-items-center gap-1" title="Logout" onclick="if (confirm('Log out of POS?')) window.authService.logout()">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span class="small" style="font-size: 0.75rem;">Logout</span>
               </button>
             </div>
           </div>
@@ -154,6 +155,27 @@ class AppController {
           </a>
         </nav>
       `;
+    }
+
+    // Inject global header logout button if top-header is present
+    this.injectHeaderControls();
+  }
+
+  injectHeaderControls() {
+    const headerRight = document.querySelector('.header-right');
+    if (headerRight && !document.getElementById('global-header-logout-btn')) {
+      const logoutBtn = document.createElement('button');
+      logoutBtn.id = 'global-header-logout-btn';
+      logoutBtn.type = 'button';
+      logoutBtn.className = 'btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1 ms-1';
+      logoutBtn.title = 'Logout of POS';
+      logoutBtn.innerHTML = '<i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="d-none d-sm-inline small fw-bold">Logout</span>';
+      logoutBtn.onclick = () => {
+        if (confirm('Are you sure you want to log out of the POS system?')) {
+          window.authService.logout();
+        }
+      };
+      headerRight.appendChild(logoutBtn);
     }
   }
 

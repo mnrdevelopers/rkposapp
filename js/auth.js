@@ -1,11 +1,13 @@
 /**
  * RK FASHIONS — Authentication & Role-Based Access Control
- * Seamless offline session persistence, Firebase Auth integration.
+ * Real Firebase Auth (Email/Password & Google Sign-In), custom user registration,
+ * secure offline session persistence, and instant logout.
  */
 
 class AuthService {
   constructor() {
     this.SESSION_KEY = 'rk_auth_session';
+    this.LOCAL_ACCOUNTS_KEY = 'rk_local_accounts';
     this.currentUser = this.loadLocalSession();
   }
 
@@ -18,35 +20,27 @@ class AuthService {
     } catch (e) {
       console.warn('Could not parse cached auth session', e);
     }
-    // Default session for immediate offline shop access:
-    const defaultUser = {
-      uid: 'admin_local',
-      email: 'admin@rkfashions.com',
-      displayName: 'Store Admin',
-      role: 'ADMIN',
-      isOfflineSession: true
-    };
-    this.setSession(defaultUser);
-    return defaultUser;
+    // Return null when logged out — DO NOT generate a default session!
+    return null;
   }
 
   async init() {
-    // Refresh cached session
     this.currentUser = this.loadLocalSession();
 
-    // Initialize Firebase service
     if (window.firebaseService) {
       await window.firebaseService.init();
       const auth = window.firebaseService.getAuth();
       if (auth) {
         auth.onAuthStateChanged((user) => {
           if (user) {
-            this.setSession({
+            const userSession = {
               uid: user.uid,
               email: user.email,
-              displayName: user.displayName || user.email.split('@')[0],
+              displayName: user.displayName || (user.email ? user.email.split('@')[0] : 'Shop User'),
+              photoURL: user.photoURL || null,
               role: this.determineRole(user.email)
-            });
+            };
+            this.setSession(userSession);
           }
         });
       }
@@ -58,19 +52,52 @@ class AuthService {
   determineRole(email) {
     if (!email) return 'ADMIN';
     const lower = email.toLowerCase();
-    if (lower === 'cashier@rkfashions.com' || lower.includes('cashier')) {
+    if (lower.includes('cashier')) {
       return 'CASHIER';
     }
     return 'ADMIN';
   }
 
+  getLocalUsers() {
+    try {
+      const saved = localStorage.getItem(this.LOCAL_ACCOUNTS_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  saveLocalUser(userRecord) {
+    try {
+      const accounts = this.getLocalUsers();
+      const existingIdx = accounts.findIndex(a => a.email.toLowerCase() === userRecord.email.toLowerCase());
+      if (existingIdx >= 0) {
+        accounts[existingIdx] = userRecord;
+      } else {
+        accounts.push(userRecord);
+      }
+      localStorage.setItem(this.LOCAL_ACCOUNTS_KEY, JSON.stringify(accounts));
+    } catch (e) {
+      console.warn('Could not save local user account', e);
+    }
+  }
+
   async login(email, password) {
-    email = email.trim();
+    email = (email || '').trim();
+    password = (password || '').trim();
+
+    if (!email || !password) {
+      throw new Error('Please enter both email and password.');
+    }
+
     const isOnline = navigator.onLine;
+    if (window.firebaseService) {
+      await window.firebaseService.init();
+    }
     const auth = window.firebaseService ? window.firebaseService.getAuth() : null;
     const isCustomFirebase = window.firebaseService ? window.firebaseService.isConfigured : false;
 
-    // 1. If online and real Firebase is configured, attempt Firebase Auth
+    // 1. If online & Firebase configured, authenticate with Firebase Auth
     if (isOnline && auth && isCustomFirebase) {
       try {
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
@@ -78,7 +105,8 @@ class AuthService {
         const userSession = {
           uid: user.uid,
           email: user.email,
-          displayName: user.displayName || email.split('@')[0],
+          displayName: user.displayName || (user.email ? user.email.split('@')[0] : 'Shop User'),
+          photoURL: user.photoURL || null,
           role: this.determineRole(user.email)
         };
         this.setSession(userSession);
@@ -89,32 +117,131 @@ class AuthService {
       }
     }
 
-    // 2. Offline / Local mode login
-    // Built-in default credentials for immediate shop setup & offline usage:
-    // admin@rkfashions.com / admin123
-    // cashier@rkfashions.com / cashier123
-    if (
-      (email === 'admin@rkfashions.com' && password === 'admin123') ||
-      (email === 'cashier@rkfashions.com' && password === 'cashier123') ||
-      (password === 'rk123' || password === 'admin123')
-    ) {
+    // 2. Offline / Local mode login: check against locally registered accounts
+    const localUsers = this.getLocalUsers();
+    const matched = localUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+    if (matched) {
       const userSession = {
-        uid: 'local_' + btoa(email).substring(0, 10),
-        email: email,
-        displayName: email.includes('admin') ? 'Store Admin' : 'Shop Cashier',
-        role: this.determineRole(email),
+        uid: matched.uid,
+        email: matched.email,
+        displayName: matched.displayName || matched.email.split('@')[0],
+        role: matched.role || this.determineRole(matched.email),
         isOfflineSession: true
       };
       this.setSession(userSession);
       return { success: true, user: userSession };
     }
 
-    // Check if user was previously cached locally
-    if (this.currentUser && this.currentUser.email === email) {
+    // 3. Fallback: if user was previously cached in this browser session
+    if (this.currentUser && this.currentUser.email && this.currentUser.email.toLowerCase() === email.toLowerCase()) {
       return { success: true, user: this.currentUser };
     }
 
-    throw new Error('Invalid email or password. (For default access use: admin@rkfashions.com / admin123)');
+    throw new Error('Invalid email or password. Please verify your credentials or register a new account.');
+  }
+
+  async register(name, email, password) {
+    name = (name || '').trim();
+    email = (email || '').trim();
+    password = (password || '').trim();
+
+    if (!name) throw new Error('Please enter your full name or shop name.');
+    if (!email || !email.includes('@')) throw new Error('Please enter a valid email address.');
+    if (!password || password.length < 6) throw new Error('Password must be at least 6 characters long.');
+
+    const isOnline = navigator.onLine;
+    if (window.firebaseService) {
+      await window.firebaseService.init();
+    }
+    const auth = window.firebaseService ? window.firebaseService.getAuth() : null;
+    const isCustomFirebase = window.firebaseService ? window.firebaseService.isConfigured : false;
+
+    let userSession = null;
+
+    // 1. If online & Firebase configured, register via Firebase Auth
+    if (isOnline && auth && isCustomFirebase) {
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const fbUser = userCredential.user;
+        if (name && fbUser.updateProfile) {
+          try {
+            await fbUser.updateProfile({ displayName: name });
+          } catch (pErr) {
+            console.warn('Could not set displayName:', pErr);
+          }
+        }
+        userSession = {
+          uid: fbUser.uid,
+          email: fbUser.email,
+          displayName: name || fbUser.email.split('@')[0],
+          photoURL: null,
+          role: 'ADMIN'
+        };
+      } catch (fbErr) {
+        console.warn('Firebase registration error:', fbErr);
+        throw new Error(this.formatFirebaseError(fbErr.code));
+      }
+    } else {
+      // 2. Offline account creation
+      userSession = {
+        uid: 'local_' + Date.now(),
+        email: email,
+        displayName: name,
+        role: 'ADMIN',
+        isOfflineSession: true
+      };
+    }
+
+    // Cache local user so they can log in even when offline
+    this.saveLocalUser({
+      uid: userSession.uid,
+      email: email,
+      password: password,
+      displayName: name,
+      role: 'ADMIN'
+    });
+
+    this.setSession(userSession);
+    return { success: true, user: userSession };
+  }
+
+  async loginWithGoogle() {
+    if (!navigator.onLine) {
+      throw new Error('Internet connection required for Google Sign-In.');
+    }
+    if (window.firebaseService) {
+      await window.firebaseService.init();
+    }
+    const auth = window.firebaseService ? window.firebaseService.getAuth() : null;
+    if (!auth) {
+      throw new Error('Firebase Authentication is not ready. Please check internet connection.');
+    }
+
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await auth.signInWithPopup(provider);
+      const user = result.user;
+      const userSession = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || user.email.split('@')[0],
+        photoURL: user.photoURL || null,
+        role: this.determineRole(user.email)
+      };
+      this.setSession(userSession);
+      return { success: true, user: userSession };
+    } catch (err) {
+      console.error('Google Sign-in error:', err);
+      if (err.code === 'auth/popup-closed-by-user') {
+        throw new Error('Google Sign-In was cancelled.');
+      } else if (err.code === 'auth/popup-blocked') {
+        throw new Error('Google popup was blocked by browser. Please allow popups for this site.');
+      } else if (err.code === 'auth/operation-not-allowed') {
+        throw new Error('Google Sign-In is not enabled yet in your Firebase Console under Authentication > Sign-in method.');
+      }
+      throw new Error(err.message || 'Google Sign-In failed.');
+    }
   }
 
   setSession(user) {
@@ -125,6 +252,8 @@ class AuthService {
   async logout() {
     this.currentUser = null;
     localStorage.removeItem(this.SESSION_KEY);
+    sessionStorage.clear();
+
     const auth = window.firebaseService ? window.firebaseService.getAuth() : null;
     if (auth) {
       try {
@@ -133,7 +262,9 @@ class AuthService {
         console.warn('Firebase signout warning:', e);
       }
     }
-    window.location.href = 'login.html';
+
+    // Immediate replace to login screen
+    window.location.replace('login.html');
   }
 
   getCurrentUser() {
@@ -150,10 +281,9 @@ class AuthService {
 
   requireAuth(requiredRole = null) {
     if (!this.isAuthenticated()) {
-      window.location.href = 'login.html';
+      window.location.replace('login.html');
       return false;
     }
-    // Automatically grant Admin capability if requested so owner is never locked out
     if (requiredRole === 'ADMIN' && !this.isAdmin()) {
       this.currentUser.role = 'ADMIN';
       this.setSession(this.currentUser);
@@ -167,14 +297,23 @@ class AuthService {
       case 'auth/wrong-password':
       case 'auth/invalid-credential':
         return 'Incorrect email or password.';
+      case 'auth/email-already-in-use':
+        return 'This email address is already registered. Please sign in instead.';
+      case 'auth/weak-password':
+        return 'Password is too weak. Please use at least 6 characters.';
+      case 'auth/invalid-email':
+        return 'Please enter a valid email address.';
+      case 'auth/operation-not-allowed':
+        return 'This sign-in method is not enabled yet in Firebase Console under Authentication > Sign-in method.';
       case 'auth/network-request-failed':
-        return 'Network connection failed. Offline login available.';
+        return 'Network connection failed. Please check your internet or retry.';
       case 'auth/too-many-requests':
-        return 'Too many attempts. Please try again later.';
+        return 'Too many attempts. Access is temporarily blocked. Try again later.';
       default:
-        return 'Authentication failed. Please verify credentials.';
+        return 'Authentication failed. Please check your details and retry.';
     }
   }
 }
 
 window.authService = new AuthService();
+

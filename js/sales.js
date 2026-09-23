@@ -52,7 +52,7 @@ class SalesService {
       paymentMethod: paymentMethod.toUpperCase(),
       status: 'COMPLETED', // 'COMPLETED' | 'CANCELLED'
       synced: 0, // 0 = Pending, 1 = Synced
-      createdBy: currentUser ? currentUser.email : 'cashier@rkfashions.com'
+      createdBy: currentUser ? (currentUser.email || currentUser.displayName || 'pos_user') : 'pos_user'
     };
 
     // 2. Prepare items records & reduce inventory

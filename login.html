@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login — RK FASHIONS</title>
+  <title>Login &amp; Register — RK FASHIONS</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
   <meta name="theme-color" content="#74512D">
@@ -13,61 +13,119 @@
 </head>
 <body style="background: linear-gradient(135deg, #F8F4E1 0%, #EFE7D2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem;">
 
-  <div class="card-retail shadow-lg" style="width: 100%; max-width: 440px; padding: 2.25rem; border-radius: var(--radius-lg); background: #FFFFFF;">
+  <div class="card-retail shadow-lg" style="width: 100%; max-width: 450px; padding: 2.25rem; border-radius: var(--radius-lg); background: #FFFFFF;">
+    <!-- Brand Header -->
     <div class="text-center mb-4">
-      <div style="width: 64px; height: 64px; background: var(--dark); border-radius: var(--radius-md); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(78, 31, 0, 0.2);">
+      <div style="width: 60px; height: 60px; background: var(--dark); border-radius: var(--radius-md); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; box-shadow: 0 4px 12px rgba(78, 31, 0, 0.2);">
         <i class="fa-solid fa-shirt text-warning fa-2x"></i>
       </div>
-      <h2 style="font-weight: 900; color: var(--dark); margin: 0; letter-spacing: 0.5px;">RK FASHIONS</h2>
-      <div style="font-size: 0.85rem; font-weight: 700; color: var(--primary); letter-spacing: 1px; margin-top: 4px;">LADIES &amp; KIDS WEAR</div>
-      <p class="text-muted mt-2 small">Retail POS &amp; Inventory Management System</p>
+      <h2 style="font-weight: 900; color: var(--dark); margin: 0; letter-spacing: 0.5px; font-size: 1.6rem;">RK FASHIONS</h2>
+      <div style="font-size: 0.8rem; font-weight: 700; color: var(--primary); letter-spacing: 1px; margin-top: 2px;">LADIES &amp; KIDS WEAR</div>
+      <p class="text-muted mt-1 small">Retail POS &amp; Inventory Management</p>
     </div>
 
-    <!-- Alert Box -->
-    <div id="login-alert" class="alert alert-danger d-none py-2 px-3 small" role="alert"></div>
+    <!-- Alert Message Box -->
+    <div id="auth-alert" class="alert d-none py-2 px-3 small" role="alert"></div>
 
-    <form id="login-form">
+    <!-- Google Sign-In Button -->
+    <button type="button" id="btn-google-login" class="btn w-100 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm" style="border: 1px solid #dadce0; background: #ffffff; color: #3c4043; font-weight: 600; border-radius: 8px;">
+      <svg width="18" height="18" viewBox="0 0 18 18">
+        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
+        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+        <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.173 0 7.548 0 9s.347 2.827.957 4.039l3.007-2.332z"/>
+        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
+      </svg>
+      <span id="google-btn-text">Sign in with Google</span>
+      <span id="google-spinner" class="spinner-border spinner-border-sm text-secondary ms-1 d-none"></span>
+    </button>
+
+    <!-- Divider -->
+    <div class="d-flex align-items-center my-3">
+      <hr class="flex-grow-1 my-0 text-muted" style="opacity: 0.25;">
+      <span class="px-2 small text-muted" style="font-size: 0.78rem;">or continue with email</span>
+      <hr class="flex-grow-1 my-0 text-muted" style="opacity: 0.25;">
+    </div>
+
+    <!-- Mode Selector Tabs -->
+    <ul class="nav nav-pills nav-fill mb-3 bg-light p-1 rounded border">
+      <li class="nav-item">
+        <button type="button" class="nav-link active fw-bold small py-1" id="tab-signin-btn" onclick="switchAuthTab('signin')">
+          <i class="fa-solid fa-right-to-bracket me-1"></i>Sign In
+        </button>
+      </li>
+      <li class="nav-item">
+        <button type="button" class="nav-link fw-bold small py-1 text-muted" id="tab-register-btn" onclick="switchAuthTab('register')">
+          <i class="fa-solid fa-user-plus me-1"></i>Register
+        </button>
+      </li>
+    </ul>
+
+    <!-- 1. SIGN IN FORM -->
+    <form id="signin-form">
       <div class="mb-3">
-        <label for="login-email" class="form-label-retail">Email Address</label>
+        <label for="signin-email" class="form-label-retail">Email Address</label>
         <div class="input-group">
           <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-envelope text-muted"></i></span>
-          <input type="email" id="login-email" class="form-control form-control-retail border-start-0" placeholder="admin@rkfashions.com" required autofocus autocomplete="username">
+          <input type="email" id="signin-email" class="form-control form-control-retail border-start-0" placeholder="yourname@gmail.com" required autocomplete="username">
         </div>
       </div>
 
       <div class="mb-3">
-        <label for="login-password" class="form-label-retail">Password</label>
+        <label for="signin-password" class="form-label-retail">Password</label>
         <div class="input-group">
           <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
-          <input type="password" id="login-password" class="form-control form-control-retail border-start-0" placeholder="••••••••" required autocomplete="current-password">
+          <input type="password" id="signin-password" class="form-control form-control-retail border-start-0" placeholder="••••••••" required autocomplete="current-password">
         </div>
       </div>
 
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="remember-me" checked>
-          <label class="form-check-label small" for="remember-me">Remember session</label>
-        </div>
-        <span class="badge bg-light text-muted border small"><i class="fa-solid fa-shield-halved me-1"></i>Offline Ready</span>
-      </div>
-
-      <button type="submit" id="btn-login" class="btn btn-retail btn-primary-retail w-100 py-2 fs-6">
-        <span id="btn-login-spinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+      <button type="submit" id="btn-signin-submit" class="btn btn-retail btn-primary-retail w-100 py-2 fs-6 mt-2">
+        <span id="btn-signin-spinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
         <span>LOGIN TO POS</span>
       </button>
     </form>
 
-    <!-- Fast Access Credential Helper for Shop Setup -->
-    <div class="mt-4 pt-3 border-top text-center">
-      <div class="small text-muted mb-2 font-monospace" style="font-size: 0.76rem;">Default Shop Roles:</div>
-      <div class="d-flex gap-2 justify-content-center">
-        <button type="button" class="btn btn-sm btn-outline-retail py-1 px-2 small" onclick="fillCreds('admin@rkfashions.com', 'admin123')">
-          <i class="fa-solid fa-user-shield me-1"></i>Admin
-        </button>
-        <button type="button" class="btn btn-sm btn-outline-retail py-1 px-2 small" onclick="fillCreds('cashier@rkfashions.com', 'cashier123')">
-          <i class="fa-solid fa-user me-1"></i>Cashier
-        </button>
+    <!-- 2. REGISTER FORM -->
+    <form id="register-form" class="d-none">
+      <div class="mb-3">
+        <label for="register-name" class="form-label-retail">Full Name / Shop Name</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-user text-muted"></i></span>
+          <input type="text" id="register-name" class="form-control form-control-retail border-start-0" placeholder="e.g. Ramesh Kumar" required autocomplete="name">
+        </div>
       </div>
+
+      <div class="mb-3">
+        <label for="register-email" class="form-label-retail">Email Address</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-envelope text-muted"></i></span>
+          <input type="email" id="register-email" class="form-control form-control-retail border-start-0" placeholder="yourname@gmail.com" required autocomplete="username">
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="register-password" class="form-label-retail">Password (min 6 characters)</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
+          <input type="password" id="register-password" class="form-control form-control-retail border-start-0" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="register-confirm-password" class="form-label-retail">Confirm Password</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-shield-halved text-muted"></i></span>
+          <input type="password" id="register-confirm-password" class="form-control form-control-retail border-start-0" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+        </div>
+      </div>
+
+      <button type="submit" id="btn-register-submit" class="btn btn-retail btn-primary-retail w-100 py-2 fs-6 mt-2">
+        <span id="btn-register-spinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+        <span>CREATE ACCOUNT &amp; START POS</span>
+      </button>
+    </form>
+
+    <div class="mt-3 text-center">
+      <small class="text-muted"><i class="fa-solid fa-shield-halved me-1"></i>Offline-First Architecture &bull; Automatic Cloud Sync</small>
     </div>
   </div>
 
@@ -75,42 +133,126 @@
   <script src="js/firebase-config.js"></script>
   <script src="js/auth.js"></script>
   <script>
-    function fillCreds(email, password) {
-      document.getElementById('login-email').value = email;
-      document.getElementById('login-password').value = password;
-      document.getElementById('login-alert').classList.add('d-none');
-    }
+    let currentMode = 'signin';
 
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
-      const alertBox = document.getElementById('login-alert');
-      const btn = document.getElementById('btn-login');
-      const spinner = document.getElementById('btn-login-spinner');
+    function switchAuthTab(mode) {
+      currentMode = mode;
+      const signinForm = document.getElementById('signin-form');
+      const registerForm = document.getElementById('register-form');
+      const tabSigninBtn = document.getElementById('tab-signin-btn');
+      const tabRegisterBtn = document.getElementById('tab-register-btn');
+      const alertBox = document.getElementById('auth-alert');
 
       alertBox.classList.add('d-none');
+
+      if (mode === 'signin') {
+        signinForm.classList.remove('d-none');
+        registerForm.classList.add('d-none');
+        tabSigninBtn.classList.add('active', 'text-white');
+        tabSigninBtn.classList.remove('text-muted');
+        tabRegisterBtn.classList.remove('active', 'text-white');
+        tabRegisterBtn.classList.add('text-muted');
+      } else {
+        signinForm.classList.add('d-none');
+        registerForm.classList.remove('d-none');
+        tabRegisterBtn.classList.add('active', 'text-white');
+        tabRegisterBtn.classList.remove('text-muted');
+        tabSigninBtn.classList.remove('active', 'text-white');
+        tabSigninBtn.classList.add('text-muted');
+      }
+    }
+
+    function showAlert(message, type = 'danger') {
+      const alertBox = document.getElementById('auth-alert');
+      alertBox.className = `alert alert-${type} py-2 px-3 small`;
+      alertBox.textContent = message;
+      alertBox.classList.remove('d-none');
+    }
+
+    // Google Sign-In
+    document.getElementById('btn-google-login').addEventListener('click', async () => {
+      const btn = document.getElementById('btn-google-login');
+      const spinner = document.getElementById('google-spinner');
+      const text = document.getElementById('google-btn-text');
+
       btn.disabled = true;
       spinner.classList.remove('d-none');
+      text.textContent = 'Connecting Google...';
+      document.getElementById('auth-alert').classList.add('d-none');
+
+      try {
+        await window.authService.loginWithGoogle();
+        window.location.replace('sale.html');
+      } catch (err) {
+        showAlert(err.message || 'Google Sign-In failed.');
+      } finally {
+        btn.disabled = false;
+        spinner.classList.add('d-none');
+        text.textContent = 'Sign in with Google';
+      }
+    });
+
+    // Email/Password Sign-In
+    document.getElementById('signin-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('signin-email').value;
+      const password = document.getElementById('signin-password').value;
+      const btn = document.getElementById('btn-signin-submit');
+      const spinner = document.getElementById('btn-signin-spinner');
+
+      btn.disabled = true;
+      spinner.classList.remove('d-none');
+      document.getElementById('auth-alert').classList.add('d-none');
 
       try {
         await window.authService.login(email, password);
-        window.location.href = 'sale.html';
+        window.location.replace('sale.html');
       } catch (err) {
-        alertBox.textContent = err.message || 'Login failed. Please check credentials.';
-        alertBox.classList.remove('d-none');
+        showAlert(err.message || 'Sign in failed. Check credentials.');
       } finally {
         btn.disabled = false;
         spinner.classList.add('d-none');
       }
     });
 
-    // Auto-redirect if already authenticated
+    // Registration Form
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('register-name').value;
+      const email = document.getElementById('register-email').value;
+      const password = document.getElementById('register-password').value;
+      const confirmPassword = document.getElementById('register-confirm-password').value;
+      const btn = document.getElementById('btn-register-submit');
+      const spinner = document.getElementById('btn-register-spinner');
+
+      if (password !== confirmPassword) {
+        showAlert('Passwords do not match. Please re-enter.');
+        return;
+      }
+
+      btn.disabled = true;
+      spinner.classList.remove('d-none');
+      document.getElementById('auth-alert').classList.add('d-none');
+
+      try {
+        await window.authService.register(name, email, password);
+        showAlert('Account created successfully! Redirecting...', 'success');
+        setTimeout(() => {
+          window.location.replace('sale.html');
+        }, 600);
+      } catch (err) {
+        showAlert(err.message || 'Registration failed.');
+        btn.disabled = false;
+        spinner.classList.add('d-none');
+      }
+    });
+
+    // Only redirect if active valid session is present
     window.addEventListener('DOMContentLoaded', async () => {
-      await window.appDB.init();
+      if (window.appDB) await window.appDB.init();
       const user = await window.authService.init();
       if (user) {
-        window.location.href = 'sale.html';
+        window.location.replace('sale.html');
       }
     });
   </script>

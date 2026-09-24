@@ -14,12 +14,14 @@ class CartService {
 
   async loadSettings() {
     try {
+      // Ensure DB is ready before querying — constructor fires before DOMContentLoaded
+      if (window.appDB) await window.appDB.init();
       const setting = await window.appDB.get('settings', 'allowNegativeStock');
       if (setting) {
         this.allowNegativeStock = !!setting.value;
       }
     } catch (e) {
-      // Use default
+      // Use default (false)
     }
   }
 

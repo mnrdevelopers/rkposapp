@@ -142,7 +142,7 @@ class ProductService {
     }
 
     if (!savedToCloud) {
-      await window.salesService.enqueueSync('SAVE_PRODUCT', 'products', productId, {
+      await window.appDB.enqueueSync('SAVE_PRODUCT', 'products', productId, {
         product: productRecord,
         variants: savedVariants
       });
@@ -238,7 +238,7 @@ class ProductService {
 
     // 5. If not deleted directly (e.g. offline or transient error), queue for sync
     if (!deletedDirectly) {
-      await window.salesService.enqueueSync('DELETE_PRODUCT', 'products', productId, {
+      await window.appDB.enqueueSync('DELETE_PRODUCT', 'products', productId, {
         productId: productId
       });
       if (window.syncService) {

@@ -127,20 +127,23 @@ class SyncService {
 
         try {
           await this.processQueueItem(firestore, item);
-          // Mark or remove from queue
+          // Successfully synced — remove from queue
           await db.delete('syncQueue', item.id);
         } catch (itemErr) {
           console.warn(`Sync failed for queue item ${item.id}:`, itemErr);
           item.retryCount = (item.retryCount || 0) + 1;
           item.lastError = itemErr.message;
-          await db.update('syncQueue', item);
 
-          // If permission is denied or retried repeatedly, allow following operations (e.g. deletions) to proceed
+          // Permanently failed — DELETE from queue so it never blocks sync again
           if (itemErr.code === 'permission-denied' || item.retryCount >= 4) {
-            console.error(`Item ${item.id} (${item.action}) encountered permanent/permission error: ${itemErr.message}. Skipping to next.`);
-            continue;
+            console.error(`Item ${item.id} (${item.action}) permanently failed after ${item.retryCount} attempts. Removing from queue.`);
+            await db.delete('syncQueue', item.id);
+            continue; // Move to next item
           }
-          break; // Stop batch on network/auth offline error to preserve sequence
+
+          // Transient error — persist retry count and stop this batch
+          await db.update('syncQueue', item);
+          break; // Preserve sequence for next sync attempt
         }
       }
 

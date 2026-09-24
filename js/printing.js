@@ -137,10 +137,10 @@ class PrintingService {
       </div>
     `;
 
-    // Wait micro-moment for render then print
+    // Allow DOM to fully render before triggering print dialog
     setTimeout(() => {
       window.print();
-    }, 150);
+    }, 350);
   }
 
   /**
@@ -189,7 +189,7 @@ class PrintingService {
 
     setTimeout(() => {
       window.print();
-    }, 250);
+    }, 400);
   }
 }
 

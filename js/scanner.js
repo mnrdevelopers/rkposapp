@@ -55,6 +55,16 @@ class ScannerService {
   initUsbScanner(callback) {
     this.scanCallback = callback;
 
+    // Clear the USB buffer when focus moves to a non-POS input to prevent
+    // partial keystrokes from a previous field contaminating the barcode read
+    document.addEventListener('focusin', (e) => {
+      const target = e.target;
+      const isPosInput = target && target.id === 'pos-barcode-input';
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') && !isPosInput) {
+        this.usbBuffer = '';
+      }
+    });
+
     window.addEventListener('keydown', (e) => {
       // Don't intercept if user is typing inside textareas or standard forms (unless it's the POS barcode input)
       const target = e.target;

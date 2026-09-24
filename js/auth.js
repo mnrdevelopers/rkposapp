@@ -32,13 +32,16 @@ class AuthService {
       const auth = window.firebaseService.getAuth();
       if (auth) {
         auth.onAuthStateChanged((user) => {
-          if (user) {
+          if (user && !user.isAnonymous) {
+            // Merge with existing session to preserve storeId, storeCode & custom role
+            const existing = this.currentUser || {};
             const userSession = {
+              ...existing,
               uid: user.uid,
               email: user.email,
-              displayName: user.displayName || (user.email ? user.email.split('@')[0] : 'Shop User'),
-              photoURL: user.photoURL || null,
-              role: this.determineRole(user.email)
+              displayName: user.displayName || existing.displayName || (user.email ? user.email.split('@')[0] : 'Shop User'),
+              photoURL: user.photoURL || existing.photoURL || null,
+              role: existing.role || this.determineRole(user.email)
             };
             this.setSession(userSession);
           }
@@ -128,7 +131,16 @@ class AuthService {
 
     // 2. Offline / Local mode login: check against locally registered accounts
     const localUsers = this.getLocalUsers();
-    const matched = localUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+    const hashedInput = await this.hashPassword(password);
+    const matched = localUsers.find(u => {
+      if (u.email.toLowerCase() !== email.toLowerCase()) return false;
+      return u.password === hashedInput || u.password === password; // support legacy plain-text migration
+    });
+    // Migrate legacy plain-text password to hashed on successful login
+    if (matched && matched.password === password && matched.password !== hashedInput) {
+      matched.password = hashedInput;
+      this.saveLocalUser(matched);
+    }
     if (matched) {
       const userSession = {
         uid: matched.uid,
@@ -217,7 +229,7 @@ class AuthService {
     this.saveLocalUser({
       uid: userSession.uid,
       email: email,
-      password: password,
+      password: await this.hashPassword(password), // Store hashed — never plain-text
       displayName: name,
       storeId: userSession.storeId,
       storeCode: userSession.storeCode,
@@ -327,10 +339,28 @@ class AuthService {
       return false;
     }
     if (requiredRole === 'ADMIN' && !this.isAdmin()) {
-      this.currentUser.role = 'ADMIN';
-      this.setSession(this.currentUser);
+      // Block access — do NOT silently promote role
+      console.warn('[Auth] Access denied: Admin role required. Redirecting to POS.');
+      window.location.replace('sale.html');
+      return false;
     }
     return true;
+  }
+
+  /**
+   * Hashes a password with SHA-256 (SubtleCrypto) before storing locally.
+   * Falls back to plain-text on environments without SubtleCrypto (very rare).
+   */
+  async hashPassword(password) {
+    try {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(password + ':rk_fashions_2024');
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(hashBuffer))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (e) {
+      return password; // Fallback for environments without SubtleCrypto
+    }
   }
 
   formatFirebaseError(code, message = '') {

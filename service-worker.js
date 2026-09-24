@@ -42,6 +42,7 @@ const PRECACHE_ASSETS = [
   './js/printing.js',
   './js/reports.js',
   './js/settings.js',
+  './js/products.js',
   './js/app.js',
   './assets/icons/icon.svg'
 ];

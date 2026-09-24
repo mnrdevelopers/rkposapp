@@ -86,6 +86,7 @@ class AppDatabase {
       };
 
       request.onerror = (event) => {
+        this.initPromise = null; // Reset so callers can retry on next call
         console.error('IndexedDB open failed:', event.target.error);
         reject(event.target.error);
       };
@@ -232,6 +233,25 @@ class AppDatabase {
     } catch (e) {
       console.warn('Could not reset sequences:', e);
     }
+  }
+
+  /**
+   * Adds an operation to the shared offline sync queue.
+   * Centralised here so all services (products, sales, inventory) can enqueue
+   * without depending on each other.
+   */
+  async enqueueSync(action, collection, docId, data) {
+    const queueItem = {
+      id: 'queue_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11),
+      action,
+      collection,
+      docId,
+      data,
+      status: 'PENDING',
+      retryCount: 0,
+      timestamp: Date.now()
+    };
+    await this.add('syncQueue', queueItem);
   }
 }
 

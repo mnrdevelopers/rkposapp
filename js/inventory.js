@@ -63,7 +63,7 @@ class InventoryService {
     variant.updatedAt = Date.now();
     await db.update('variants', variant);
 
-    await window.salesService.enqueueSync('UPDATE_VARIANT_STOCK', 'variants', variantId, {
+    await window.appDB.enqueueSync('UPDATE_VARIANT_STOCK', 'variants', variantId, {
       stock: variant.stock,
       updatedAt: variant.updatedAt
     });

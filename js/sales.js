@@ -7,6 +7,7 @@ class SalesService {
   constructor() {
     this.BILL_PREFIX = 'RK';
     this.BILL_DIGITS = 6;
+    this._seq = 0; // Monotonic counter for unique IDs within the same millisecond
   }
 
   /**
@@ -59,7 +60,7 @@ class SalesService {
     const saleItemsRecords = [];
 
     for (const item of items) {
-      const saleItemId = 'item_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+      const saleItemId = 'item_' + Date.now() + '_' + (++this._seq) + '_' + Math.random().toString(36).substring(2, 6);
       const itemRecord = {
         id: saleItemId,
         saleId: saleId,
@@ -170,18 +171,11 @@ class SalesService {
     return { sale, items };
   }
 
+  // Thin wrapper — delegates to the shared AppDatabase enqueueSync so this method
+  // remains callable by any legacy code (e.g. products.js, inventory.js) while
+  // the actual queue logic lives in a single place.
   async enqueueSync(action, collection, docId, data) {
-    const queueItem = {
-      id: 'queue_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
-      action,
-      collection,
-      docId,
-      data,
-      status: 'PENDING',
-      retryCount: 0,
-      timestamp: Date.now()
-    };
-    await window.appDB.add('syncQueue', queueItem);
+    return window.appDB.enqueueSync(action, collection, docId, data);
   }
 }
 

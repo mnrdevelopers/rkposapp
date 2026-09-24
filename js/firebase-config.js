@@ -120,13 +120,6 @@ class FirebaseService {
           // settings can only be called before any other operations
         }
 
-        // Auto-authenticate POS terminal anonymously if not already signed in
-        if (this.auth && !this.auth.currentUser) {
-          this.auth.signInAnonymously().catch(() => {
-            // Anonymous sign-in not enabled; relies on Firestore rules
-          });
-        }
-
         this.isInitialized = true;
         console.log('Universal Firebase initialized successfully for project:', this.config.projectId);
       } catch (err) {

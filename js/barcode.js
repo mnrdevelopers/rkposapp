@@ -80,11 +80,41 @@ class BarcodeService {
    * in case external library fails to load.
    */
   renderFallbackBarcode(targetElement, barcodeValue) {
+    const val = String(barcodeValue);
+
     if (targetElement.tagName.toLowerCase() === 'svg') {
+      // Generate a simple alternating-width bar pattern as a visual stand-in
+      let bars = '';
+      const totalWidth = Math.max(val.length * 5, 80);
+      for (let i = 0; i < val.length; i++) {
+        const w = (val.charCodeAt(i) % 3) + 1;
+        const x = i * 5;
+        bars += `<rect x="${x}" y="2" width="${w}" height="28" fill="#000"/>`;
+      }
+      targetElement.setAttribute('viewBox', `0 0 ${totalWidth} 40`);
+      targetElement.setAttribute('width', '100%');
       targetElement.innerHTML = `
         <rect width="100%" height="100%" fill="#fff"/>
-        <text x="50%" y="24" font-size="12" font-family="monospace" text-anchor="middle" fill="#000">${barcodeValue}</text>
+        ${bars}
+        <text x="${totalWidth / 2}" y="38" font-size="7" font-family="monospace" text-anchor="middle" fill="#000">${val}</text>
       `;
+    } else if (targetElement.tagName.toLowerCase() === 'canvas') {
+      // Canvas fallback
+      const ctx = targetElement.getContext('2d');
+      if (ctx) {
+        targetElement.width = Math.max(val.length * 5, 80);
+        targetElement.height = 40;
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, targetElement.width, targetElement.height);
+        ctx.fillStyle = '#000';
+        for (let i = 0; i < val.length; i++) {
+          const w = (val.charCodeAt(i) % 3) + 1;
+          ctx.fillRect(i * 5, 2, w, 28);
+        }
+        ctx.font = '7px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(val, targetElement.width / 2, 38);
+      }
     }
   }
 
